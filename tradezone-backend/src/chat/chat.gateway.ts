@@ -15,11 +15,42 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      'http://localhost:5173', // Local development
-      'http://localhost:3000', // Local development
-      'https://tradezone-frontend.onrender.com', // Deployed frontend
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Always allow Render domains
+      if (origin.endsWith('.onrender.com')) {
+        return callback(null, true);
+      }
+
+      // Allow localhost for development
+      if (origin.includes('localhost')) {
+        return callback(null, true);
+      }
+
+      // Allow specific known origins
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://tradezone-2kfy.onrender.com',
+      ];
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // In development, allow all; in production, reject unknown
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+
+      console.warn(`⚠️ WebSocket CORS: Rejected origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   },
 })
