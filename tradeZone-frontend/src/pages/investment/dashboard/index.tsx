@@ -56,6 +56,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   const { canAccessInvestment } = usePermissions();
   
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   // Redux state - using both old and new dashboard for transition
   const { data: oldDashboardData, loading: oldLoading, error: oldError } = useSelector((state: RootState) => state.dashboard);

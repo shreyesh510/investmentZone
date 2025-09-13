@@ -1,10 +1,16 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { TradePnLDto } from '../../services/tradePnLApi';
-import { fetchTradePnL, createTradePnL, updateTradePnL, deleteTradePnL, fetchTradePnLStatistics } from '../thunks/tradePnL/tradePnLThunks';
+import type { TradePnLDto, TradePnLPaginatedResponse } from '../../services/tradePnLApi';
+import { fetchTradePnL, fetchTradePnLPaginated, createTradePnL, updateTradePnL, deleteTradePnL, fetchTradePnLStatistics } from '../thunks/tradePnL/tradePnLThunks';
 
 interface TradePnLState {
   items: TradePnLDto[];
   statistics: any;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  } | null;
   loading: boolean;
   creating: boolean;
   updating: boolean;
@@ -15,6 +21,7 @@ interface TradePnLState {
 const initialState: TradePnLState = {
   items: [],
   statistics: null,
+  pagination: null,
   loading: false,
   creating: false,
   updating: false,
@@ -84,6 +91,20 @@ const tradePnLSlice = createSlice({
       .addCase(deleteTradePnL.rejected, (state, action) => {
         state.deleting = false;
         state.error = (action.payload as string) ?? 'Failed to delete trade P&L record';
+      })
+      .addCase(fetchTradePnLPaginated.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTradePnLPaginated.fulfilled, (state, action: PayloadAction<TradePnLPaginatedResponse>) => {
+        state.loading = false;
+        state.items = action.payload.data;
+        state.statistics = action.payload.statistics;
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(fetchTradePnLPaginated.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) ?? 'Failed to fetch trade P&L records';
       })
       .addCase(fetchTradePnLStatistics.pending, (state) => {
         state.loading = true;

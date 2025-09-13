@@ -1481,9 +1481,17 @@ export class FirebaseDatabaseService {
         return { id: d.id, ...data, createdAt, updatedAt };
       });
       return items.sort((a, b) => {
-        const aTime = a.date ? new Date(a.date).getTime() : 0;
-        const bTime = b.date ? new Date(b.date).getTime() : 0;
-        return bTime - aTime;
+        // First sort by date (descending - latest date first)
+        const aDate = a.date ? new Date(a.date).getTime() : 0;
+        const bDate = b.date ? new Date(b.date).getTime() : 0;
+        if (aDate !== bDate) {
+          return bDate - aDate;
+        }
+
+        // If dates are the same, sort by createdAt timestamp (descending - latest created first)
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bCreated - aCreated;
       }) as any;
     } catch (error) {
       console.error('Error getting trade P&L:', error);

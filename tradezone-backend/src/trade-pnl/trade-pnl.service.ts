@@ -69,6 +69,87 @@ export class TradePnLService {
     });
   }
 
+  async findAllPaginated(
+    userId: string,
+    days?: number,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: TradePnL[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    statistics: {
+      totalProfit: number;
+      totalLoss: number;
+      netPnL: number;
+      totalTrades: number;
+      winningTrades: number;
+      losingTrades: number;
+      winRate: string;
+      averageDailyPnL: string;
+      daysTraded: number;
+      period: string;
+    };
+  }> {
+    // Get all filtered items for statistics calculation
+    const allFilteredItems = await this.findAll(userId, days);
+
+    // Calculate statistics from all filtered items
+    const totalProfit = allFilteredItems.reduce((sum, item) => sum + item.profit, 0);
+    const totalLoss = allFilteredItems.reduce((sum, item) => sum + item.loss, 0);
+    const netPnL = allFilteredItems.reduce((sum, item) => sum + item.netPnL, 0);
+    const totalTrades = allFilteredItems.reduce(
+      (sum, item) => sum + (item.totalTrades || 0),
+      0,
+    );
+    const winningTrades = allFilteredItems.reduce(
+      (sum, item) => sum + (item.winningTrades || 0),
+      0,
+    );
+    const losingTrades = allFilteredItems.reduce(
+      (sum, item) => sum + (item.losingTrades || 0),
+      0,
+    );
+
+    const statistics = {
+      period: days ? `${days} days` : 'All time',
+      totalProfit,
+      totalLoss,
+      netPnL,
+      totalTrades,
+      winningTrades,
+      losingTrades,
+      winRate:
+        totalTrades > 0
+          ? ((winningTrades / totalTrades) * 100).toFixed(2) + '%'
+          : '0%',
+      averageDailyPnL:
+        allFilteredItems.length > 0 ? (netPnL / allFilteredItems.length).toFixed(2) : '0',
+      daysTraded: allFilteredItems.length,
+    };
+
+    // Apply pagination to the filtered items
+    const total = allFilteredItems.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const paginatedItems = allFilteredItems.slice(offset, offset + limit);
+
+    return {
+      data: paginatedItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+      statistics,
+    };
+  }
+
   async findOne(id: string, userId: string): Promise<TradePnL> {
     const item = await this.firebaseDatabaseService.getTradePnLById(userId, id);
     if (!item) {
