@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../../layouts/header';
+import Header from '../../../layouts/Header';
 import Sidebar from '../../../layouts/sidebar';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
