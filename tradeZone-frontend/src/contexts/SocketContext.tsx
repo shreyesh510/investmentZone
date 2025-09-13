@@ -4,7 +4,6 @@ import { useAppSelector } from '../redux/hooks';
 import { useToast } from './toastContext';
 import { messageStorage } from '../services/messageStorage';
 import { type Message } from '../types/message';
-import { config } from '../config/env';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -77,7 +76,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
     console.log('🔌 Creating socket connection for user:', user.id);
 
-    const newSocket = io(config.API_BASE_URL, {
+    const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000', {
       auth: {
         user: {
           userId: user.id,
