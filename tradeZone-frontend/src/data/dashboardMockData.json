@@ -1,0 +1,936 @@
+{
+  "positions": {
+    "totalPositions": 12,
+    "totalInvested": 45500,
+    "totalPnL": 2750.50
+  },
+  "wallets": {
+    "dematWallet": {
+      "balance": 8250.75,
+      "currency": "USD",
+      "count": 3
+    },
+    "bankWallet": {
+      "balance": 125000,
+      "currency": "INR",
+      "count": 2
+    },
+    "recentActivity": [
+      {
+        "id": "act_001",
+        "userId": "user_123",
+        "walletId": "wallet_demat_01",
+        "action": "deposit",
+        "data": {
+          "next": {
+            "name": "Trading Account - USD",
+            "platform": "Exness",
+            "balance": 5000,
+            "currency": "USD",
+            "notes": "Monthly investment deposit"
+          },
+          "name": "Trading Account - USD"
+        },
+        "createdAt": "2025-09-12T10:30:00.000Z",
+        "updatedAt": "2025-09-12T10:30:00.000Z"
+      },
+      {
+        "id": "act_002",
+        "userId": "user_123",
+        "walletId": "wallet_demat_02",
+        "action": "trade",
+        "data": {
+          "name": "Options Trading Account",
+          "prev": {
+            "name": "Options Trading Account",
+            "platform": "Delta Exchange",
+            "balance": 3200,
+            "currency": "USD"
+          },
+          "next": {
+            "name": "Options Trading Account",
+            "platform": "Delta Exchange",
+            "balance": 3250.75,
+            "currency": "USD"
+          },
+          "changes": {
+            "balance": 50.75
+          }
+        },
+        "createdAt": "2025-09-12T09:15:00.000Z",
+        "updatedAt": "2025-09-12T09:15:00.000Z"
+      },
+      {
+        "id": "act_003",
+        "userId": "user_123",
+        "walletId": "wallet_bank_01",
+        "action": "withdrawal",
+        "data": {
+          "prev": {
+            "name": "Main Bank Account",
+            "balance": 130000,
+            "currency": "INR"
+          },
+          "next": {
+            "name": "Main Bank Account",
+            "balance": 125000,
+            "currency": "INR"
+          },
+          "name": "Main Bank Account"
+        },
+        "createdAt": "2025-09-11T14:20:00.000Z",
+        "updatedAt": "2025-09-11T14:20:00.000Z"
+      },
+      {
+        "id": "act_004",
+        "userId": "user_123",
+        "walletId": "wallet_demat_03",
+        "action": "update",
+        "data": {
+          "name": "Crypto Trading Wallet",
+          "prev": {
+            "name": "Crypto Trading Wallet",
+            "platform": "Binance",
+            "balance": 1200,
+            "currency": "USD"
+          },
+          "next": {
+            "name": "Crypto Trading Wallet",
+            "platform": "Binance",
+            "balance": 1350,
+            "currency": "USD"
+          },
+          "changes": {
+            "balance": 150
+          }
+        },
+        "createdAt": "2025-09-11T11:45:00.000Z",
+        "updatedAt": "2025-09-11T11:45:00.000Z"
+      },
+      {
+        "id": "act_005",
+        "userId": "user_123",
+        "walletId": "wallet_demat_01",
+        "action": "trade",
+        "data": {
+          "name": "Trading Account - USD",
+          "prev": {
+            "name": "Trading Account - USD",
+            "platform": "Exness",
+            "balance": 5000,
+            "currency": "USD"
+          },
+          "next": {
+            "name": "Trading Account - USD",
+            "platform": "Exness",
+            "balance": 5125.50,
+            "currency": "USD"
+          },
+          "changes": {
+            "balance": 125.50
+          }
+        },
+        "createdAt": "2025-09-11T08:20:00.000Z",
+        "updatedAt": "2025-09-11T08:20:00.000Z"
+      },
+      {
+        "id": "act_006",
+        "userId": "user_123",
+        "walletId": "wallet_bank_01",
+        "action": "deposit",
+        "data": {
+          "name": "Main Bank Account",
+          "prev": {
+            "name": "Main Bank Account",
+            "balance": 120000,
+            "currency": "INR"
+          },
+          "next": {
+            "name": "Main Bank Account",
+            "balance": 125000,
+            "currency": "INR"
+          },
+          "changes": {
+            "balance": 5000
+          }
+        },
+        "createdAt": "2025-09-10T16:30:00.000Z",
+        "updatedAt": "2025-09-10T16:30:00.000Z"
+      },
+      {
+        "id": "act_007",
+        "userId": "user_123",
+        "walletId": "wallet_demat_02",
+        "action": "withdrawal",
+        "data": {
+          "name": "Options Trading Account",
+          "prev": {
+            "name": "Options Trading Account",
+            "platform": "Delta Exchange",
+            "balance": 3500,
+            "currency": "USD"
+          },
+          "next": {
+            "name": "Options Trading Account",
+            "platform": "Delta Exchange",
+            "balance": 3200,
+            "currency": "USD"
+          },
+          "changes": {
+            "balance": -300
+          }
+        },
+        "createdAt": "2025-09-10T12:15:00.000Z",
+        "updatedAt": "2025-09-10T12:15:00.000Z"
+      },
+      {
+        "id": "act_008",
+        "userId": "user_123",
+        "walletId": "wallet_demat_03",
+        "action": "create",
+        "data": {
+          "name": "Forex Trading Account",
+          "platform": "MetaTrader",
+          "balance": 2000,
+          "currency": "USD",
+          "notes": "New forex trading setup"
+        },
+        "createdAt": "2025-09-09T14:00:00.000Z",
+        "updatedAt": "2025-09-09T14:00:00.000Z"
+      },
+      {
+        "id": "act_009",
+        "userId": "user_123",
+        "walletId": "wallet_bank_02",
+        "action": "update",
+        "data": {
+          "name": "Savings Account",
+          "prev": {
+            "name": "Savings Account",
+            "platform": "HDFC Bank",
+            "balance": 50000,
+            "currency": "INR"
+          },
+          "next": {
+            "name": "Savings Account",
+            "platform": "HDFC Bank",
+            "balance": 52500,
+            "currency": "INR"
+          },
+          "changes": {
+            "balance": 2500
+          }
+        },
+        "createdAt": "2025-09-09T10:30:00.000Z",
+        "updatedAt": "2025-09-09T10:30:00.000Z"
+      },
+      {
+        "id": "act_010",
+        "userId": "user_123",
+        "walletId": "wallet_demat_01",
+        "action": "trade",
+        "data": {
+          "name": "Trading Account - USD",
+          "prev": {
+            "name": "Trading Account - USD",
+            "platform": "Exness",
+            "balance": 4800,
+            "currency": "USD"
+          },
+          "next": {
+            "name": "Trading Account - USD",
+            "platform": "Exness",
+            "balance": 5000,
+            "currency": "USD"
+          },
+          "changes": {
+            "balance": 200
+          }
+        },
+        "createdAt": "2025-09-08T15:45:00.000Z",
+        "updatedAt": "2025-09-08T15:45:00.000Z"
+      }
+    ]
+  },
+  "transactions": {
+    "deposits": {
+      "list": [
+        {
+          "id": "31rb2tdP0C0j3MMVba47",
+          "userId": "3olI8ZM3qAAH3wXWRD7X",
+          "amount": 9500,
+          "status": "pending",
+          "requestedAt": "2025-09-11T05:56:11.042Z",
+          "method": "Exness",
+          "description": "for new demet account"
+        },
+        {
+          "id": "aoKzlE1KSy3dVNa0Wnrq",
+          "userId": "3olI8ZM3qAAH3wXWRD7X",
+          "amount": 10000,
+          "status": "pending",
+          "requestedAt": "2025-09-07T08:08:25.922Z",
+          "description": "For longterm account"
+        }
+      ],
+      "total": 19500,
+      "pending": 2,
+      "completed": 0,
+      "recentActivity": [
+        {
+          "id": "31rb2tdP0C0j3MMVba47",
+          "userId": "3olI8ZM3qAAH3wXWRD7X",
+          "amount": 9500,
+          "status": "pending",
+          "requestedAt": "2025-09-11T05:56:11.042Z",
+          "method": "Exness",
+          "description": "for new demet account"
+        }
+      ],
+      "chartData": {
+        "weekly": [
+          {
+            "period": "2025-W37",
+            "totalAmount": 9500,
+            "count": 1,
+            "pendingAmount": 9500,
+            "completedAmount": 0,
+            "pendingCount": 1,
+            "completedCount": 0
+          }
+        ],
+        "monthly": [
+          {
+            "period": "2025-09",
+            "totalAmount": 19500,
+            "count": 2,
+            "pendingAmount": 19500,
+            "completedAmount": 0,
+            "pendingCount": 2,
+            "completedCount": 0
+          }
+        ],
+        "yearly": [
+          {
+            "period": "2025",
+            "totalAmount": 19500,
+            "count": 2,
+            "pendingAmount": 19500,
+            "completedAmount": 0,
+            "pendingCount": 2,
+            "completedCount": 0
+          }
+        ]
+      }
+    },
+    "withdrawals": {
+      "list": [
+        {
+          "id": "KLoneCEth4Y4ET9UdXSX",
+          "userId": "3olI8ZM3qAAH3wXWRD7X",
+          "amount": 2700,
+          "status": "pending",
+          "requestedAt": "2025-09-12T14:33:17.439Z",
+          "method": "Exness",
+          "description": "withdrow for test"
+        }
+      ],
+      "total": 3900,
+      "pending": 2,
+      "completed": 0,
+      "recentActivity": [
+        {
+          "id": "KLoneCEth4Y4ET9UdXSX",
+          "userId": "3olI8ZM3qAAH3wXWRD7X",
+          "amount": 2700,
+          "status": "pending",
+          "requestedAt": "2025-09-12T14:33:17.439Z",
+          "method": "Exness",
+          "description": "withdrow for test"
+        }
+      ],
+      "chartData": {
+        "daily": [
+          {
+            "period": "2025-09-09",
+            "totalAmount": 350,
+            "count": 1,
+            "pendingAmount": 0,
+            "completedAmount": 350,
+            "pendingCount": 0,
+            "completedCount": 1
+          },
+          {
+            "period": "2025-09-10",
+            "totalAmount": 780,
+            "count": 2,
+            "pendingAmount": 280,
+            "completedAmount": 500,
+            "pendingCount": 1,
+            "completedCount": 1
+          },
+          {
+            "period": "2025-09-11",
+            "totalAmount": 0,
+            "count": 0,
+            "pendingAmount": 0,
+            "completedAmount": 0,
+            "pendingCount": 0,
+            "completedCount": 0
+          },
+          {
+            "period": "2025-09-12",
+            "totalAmount": 1250,
+            "count": 1,
+            "pendingAmount": 1250,
+            "completedAmount": 0,
+            "pendingCount": 1,
+            "completedCount": 0
+          },
+          {
+            "period": "2025-09-13",
+            "totalAmount": 420,
+            "count": 1,
+            "pendingAmount": 0,
+            "completedAmount": 420,
+            "pendingCount": 0,
+            "completedCount": 1
+          },
+          {
+            "period": "2025-09-14",
+            "totalAmount": 680,
+            "count": 2,
+            "pendingAmount": 680,
+            "completedAmount": 0,
+            "pendingCount": 2,
+            "completedCount": 0
+          },
+          {
+            "period": "2025-09-15",
+            "totalAmount": 320,
+            "count": 1,
+            "pendingAmount": 0,
+            "completedAmount": 320,
+            "pendingCount": 0,
+            "completedCount": 1
+          }
+        ],
+        "weekly": [
+          {
+            "period": "2025-W36",
+            "totalAmount": 980,
+            "count": 2,
+            "pendingAmount": 480,
+            "completedAmount": 500,
+            "pendingCount": 1,
+            "completedCount": 1
+          },
+          {
+            "period": "2025-W37",
+            "totalAmount": 3900,
+            "count": 2,
+            "pendingAmount": 3900,
+            "completedAmount": 0,
+            "pendingCount": 2,
+            "completedCount": 0
+          },
+          {
+            "period": "2025-W38",
+            "totalAmount": 1420,
+            "count": 3,
+            "pendingAmount": 620,
+            "completedAmount": 800,
+            "pendingCount": 2,
+            "completedCount": 1
+          },
+          {
+            "period": "2025-W39",
+            "totalAmount": 2200,
+            "count": 4,
+            "pendingAmount": 1200,
+            "completedAmount": 1000,
+            "pendingCount": 3,
+            "completedCount": 1
+          }
+        ],
+        "monthly": [
+          {
+            "period": "2024-10",
+            "totalAmount": 2850,
+            "count": 8,
+            "pendingAmount": 0,
+            "completedAmount": 2850,
+            "pendingCount": 0,
+            "completedCount": 8
+          },
+          {
+            "period": "2024-11",
+            "totalAmount": 1950,
+            "count": 6,
+            "pendingAmount": 350,
+            "completedAmount": 1600,
+            "pendingCount": 1,
+            "completedCount": 5
+          },
+          {
+            "period": "2024-12",
+            "totalAmount": 3200,
+            "count": 9,
+            "pendingAmount": 600,
+            "completedAmount": 2600,
+            "pendingCount": 2,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-01",
+            "totalAmount": 2100,
+            "count": 7,
+            "pendingAmount": 0,
+            "completedAmount": 2100,
+            "pendingCount": 0,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-02",
+            "totalAmount": 2750,
+            "count": 8,
+            "pendingAmount": 450,
+            "completedAmount": 2300,
+            "pendingCount": 1,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-03",
+            "totalAmount": 1650,
+            "count": 5,
+            "pendingAmount": 0,
+            "completedAmount": 1650,
+            "pendingCount": 0,
+            "completedCount": 5
+          },
+          {
+            "period": "2025-04",
+            "totalAmount": 3450,
+            "count": 10,
+            "pendingAmount": 800,
+            "completedAmount": 2650,
+            "pendingCount": 2,
+            "completedCount": 8
+          },
+          {
+            "period": "2025-05",
+            "totalAmount": 2280,
+            "count": 6,
+            "pendingAmount": 280,
+            "completedAmount": 2000,
+            "pendingCount": 1,
+            "completedCount": 5
+          },
+          {
+            "period": "2025-06",
+            "totalAmount": 1890,
+            "count": 7,
+            "pendingAmount": 0,
+            "completedAmount": 1890,
+            "pendingCount": 0,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-07",
+            "totalAmount": 3100,
+            "count": 9,
+            "pendingAmount": 700,
+            "completedAmount": 2400,
+            "pendingCount": 2,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-08",
+            "totalAmount": 2650,
+            "count": 8,
+            "pendingAmount": 550,
+            "completedAmount": 2100,
+            "pendingCount": 2,
+            "completedCount": 6
+          },
+          {
+            "period": "2025-09",
+            "totalAmount": 3800,
+            "count": 7,
+            "pendingAmount": 2210,
+            "completedAmount": 1590,
+            "pendingCount": 3,
+            "completedCount": 4
+          }
+        ],
+        "yearly": [
+          {
+            "period": "2021",
+            "totalAmount": 18500,
+            "count": 65,
+            "pendingAmount": 0,
+            "completedAmount": 18500,
+            "pendingCount": 0,
+            "completedCount": 65
+          },
+          {
+            "period": "2022",
+            "totalAmount": 24200,
+            "count": 78,
+            "pendingAmount": 1200,
+            "completedAmount": 23000,
+            "pendingCount": 3,
+            "completedCount": 75
+          },
+          {
+            "period": "2023",
+            "totalAmount": 31500,
+            "count": 92,
+            "pendingAmount": 2100,
+            "completedAmount": 29400,
+            "pendingCount": 5,
+            "completedCount": 87
+          },
+          {
+            "period": "2024",
+            "totalAmount": 28900,
+            "count": 85,
+            "pendingAmount": 950,
+            "completedAmount": 27950,
+            "pendingCount": 3,
+            "completedCount": 82
+          },
+          {
+            "period": "2025",
+            "totalAmount": 32670,
+            "count": 94,
+            "pendingAmount": 5230,
+            "completedAmount": 27440,
+            "pendingCount": 12,
+            "completedCount": 82
+          }
+        ]
+      }
+    }
+  },
+  "tradePnL": {
+    "today": {
+      "profit": 425.80,
+      "loss": 125.30,
+      "netPnL": 300.50,
+      "trades": 8
+    },
+    "recent": [
+      {
+        "id": "Ibbs8mCoTt8dXHCv8b93",
+        "date": "2025-09-12",
+        "symbol": "BTCUSD",
+        "side": "buy",
+        "profit": 7.04,
+        "loss": 0,
+        "netPnL": 7.04,
+        "userId": "3olI8ZM3qAAH3wXWRD7X",
+        "createdAt": "2025-09-12T17:46:09.365Z",
+        "updatedAt": "2025-09-12T17:46:09.365Z"
+      },
+      {
+        "id": "OuWCo06yaXFqV0lFRCPT",
+        "date": "2025-09-12",
+        "symbol": "BTCUSD",
+        "side": "buy",
+        "profit": 5.03,
+        "loss": 0,
+        "netPnL": 5.03,
+        "userId": "3olI8ZM3qAAH3wXWRD7X",
+        "createdAt": "2025-09-12T17:46:09.365Z",
+        "updatedAt": "2025-09-12T17:46:09.365Z"
+      },
+      {
+        "id": "SLN0IWltSHEOdPp6Liji",
+        "date": "2025-09-12",
+        "symbol": "XAUUSD",
+        "side": "buy",
+        "profit": 0,
+        "loss": 10.38,
+        "netPnL": -10.38,
+        "userId": "3olI8ZM3qAAH3wXWRD7X",
+        "createdAt": "2025-09-12T17:30:47.363Z",
+        "updatedAt": "2025-09-12T17:30:47.363Z"
+      }
+    ],
+    "statistics": {
+      "period": "30 days",
+      "totalProfit": 147.83,
+      "totalLoss": 36.27,
+      "netPnL": 111.56,
+      "totalTrades": 5,
+      "winningTrades": 0,
+      "losingTrades": 0,
+      "winRate": "0.00%",
+      "averageDailyPnL": "0.66",
+      "daysTraded": 168
+    },
+    "chartData": {
+      "daily": [
+        {
+          "period": "2025-09-09",
+          "profit": 15.80,
+          "loss": 3.20,
+          "netPnL": 12.60,
+          "totalTrades": 4,
+          "winningTrades": 3,
+          "losingTrades": 1
+        },
+        {
+          "period": "2025-09-10",
+          "profit": 22.45,
+          "loss": 8.30,
+          "netPnL": 14.15,
+          "totalTrades": 6,
+          "winningTrades": 4,
+          "losingTrades": 2
+        },
+        {
+          "period": "2025-09-11",
+          "profit": 8.90,
+          "loss": 12.50,
+          "netPnL": -3.60,
+          "totalTrades": 5,
+          "winningTrades": 2,
+          "losingTrades": 3
+        },
+        {
+          "period": "2025-09-12",
+          "profit": 35.20,
+          "loss": 5.40,
+          "netPnL": 29.80,
+          "totalTrades": 8,
+          "winningTrades": 7,
+          "losingTrades": 1
+        },
+        {
+          "period": "2025-09-13",
+          "profit": 18.75,
+          "loss": 2.10,
+          "netPnL": 16.65,
+          "totalTrades": 3,
+          "winningTrades": 3,
+          "losingTrades": 0
+        },
+        {
+          "period": "2025-09-14",
+          "profit": 28.40,
+          "loss": 15.60,
+          "netPnL": 12.80,
+          "totalTrades": 7,
+          "winningTrades": 5,
+          "losingTrades": 2
+        },
+        {
+          "period": "2025-09-15",
+          "profit": 12.80,
+          "loss": 4.25,
+          "netPnL": 8.55,
+          "totalTrades": 4,
+          "winningTrades": 3,
+          "losingTrades": 1
+        }
+      ],
+      "weekly": [
+        {
+          "period": "2025-W36",
+          "profit": 25.53,
+          "loss": 2.91,
+          "netPnL": 22.62,
+          "totalTrades": 8,
+          "winningTrades": 7,
+          "losingTrades": 1
+        },
+        {
+          "period": "2025-W37",
+          "profit": 122.30,
+          "loss": 33.36,
+          "netPnL": 88.94,
+          "totalTrades": 20,
+          "winningTrades": 14,
+          "losingTrades": 6
+        },
+        {
+          "period": "2025-W38",
+          "profit": 58.90,
+          "loss": 28.75,
+          "netPnL": 30.15,
+          "totalTrades": 16,
+          "winningTrades": 10,
+          "losingTrades": 6
+        },
+        {
+          "period": "2025-W39",
+          "profit": 110.25,
+          "loss": 12.40,
+          "netPnL": 97.85,
+          "totalTrades": 14,
+          "winningTrades": 12,
+          "losingTrades": 2
+        }
+      ],
+      "monthly": [
+        {
+          "period": "2024-10",
+          "profit": 245.60,
+          "loss": 85.20,
+          "netPnL": 160.40,
+          "totalTrades": 45,
+          "winningTrades": 28,
+          "losingTrades": 17
+        },
+        {
+          "period": "2024-11",
+          "profit": 180.30,
+          "loss": 95.40,
+          "netPnL": 84.90,
+          "totalTrades": 38,
+          "winningTrades": 22,
+          "losingTrades": 16
+        },
+        {
+          "period": "2024-12",
+          "profit": 320.85,
+          "loss": 45.60,
+          "netPnL": 275.25,
+          "totalTrades": 52,
+          "winningTrades": 40,
+          "losingTrades": 12
+        },
+        {
+          "period": "2025-01",
+          "profit": 198.75,
+          "loss": 125.30,
+          "netPnL": 73.45,
+          "totalTrades": 42,
+          "winningTrades": 25,
+          "losingTrades": 17
+        },
+        {
+          "period": "2025-02",
+          "profit": 285.40,
+          "loss": 68.90,
+          "netPnL": 216.50,
+          "totalTrades": 48,
+          "winningTrades": 35,
+          "losingTrades": 13
+        },
+        {
+          "period": "2025-03",
+          "profit": 156.20,
+          "loss": 89.40,
+          "netPnL": 66.80,
+          "totalTrades": 36,
+          "winningTrades": 21,
+          "losingTrades": 15
+        },
+        {
+          "period": "2025-04",
+          "profit": 298.60,
+          "loss": 102.50,
+          "netPnL": 196.10,
+          "totalTrades": 55,
+          "winningTrades": 38,
+          "losingTrades": 17
+        },
+        {
+          "period": "2025-05",
+          "profit": 225.30,
+          "loss": 78.20,
+          "netPnL": 147.10,
+          "totalTrades": 44,
+          "winningTrades": 30,
+          "losingTrades": 14
+        },
+        {
+          "period": "2025-06",
+          "profit": 189.80,
+          "loss": 156.40,
+          "netPnL": 33.40,
+          "totalTrades": 40,
+          "winningTrades": 22,
+          "losingTrades": 18
+        },
+        {
+          "period": "2025-07",
+          "profit": 312.90,
+          "loss": 89.60,
+          "netPnL": 223.30,
+          "totalTrades": 58,
+          "winningTrades": 42,
+          "losingTrades": 16
+        },
+        {
+          "period": "2025-08",
+          "profit": 267.45,
+          "loss": 118.30,
+          "netPnL": 149.15,
+          "totalTrades": 50,
+          "winningTrades": 33,
+          "losingTrades": 17
+        },
+        {
+          "period": "2025-09",
+          "profit": 147.83,
+          "loss": 36.27,
+          "netPnL": 111.56,
+          "totalTrades": 35,
+          "winningTrades": 25,
+          "losingTrades": 10
+        }
+      ],
+      "yearly": [
+        {
+          "period": "2021",
+          "profit": 1850.40,
+          "loss": 650.30,
+          "netPnL": 1200.10,
+          "totalTrades": 285,
+          "winningTrades": 185,
+          "losingTrades": 100
+        },
+        {
+          "period": "2022",
+          "profit": 2240.80,
+          "loss": 890.50,
+          "netPnL": 1350.30,
+          "totalTrades": 342,
+          "winningTrades": 220,
+          "losingTrades": 122
+        },
+        {
+          "period": "2023",
+          "profit": 3150.60,
+          "loss": 1120.40,
+          "netPnL": 2030.20,
+          "totalTrades": 425,
+          "winningTrades": 295,
+          "losingTrades": 130
+        },
+        {
+          "period": "2024",
+          "profit": 2890.75,
+          "loss": 985.60,
+          "netPnL": 1905.15,
+          "totalTrades": 398,
+          "winningTrades": 268,
+          "losingTrades": 130
+        },
+        {
+          "period": "2025",
+          "profit": 2828.98,
+          "loss": 1036.27,
+          "netPnL": 1792.71,
+          "totalTrades": 458,
+          "winningTrades": 331,
+          "losingTrades": 127
+        }
+      ]
+    }
+  }
+}

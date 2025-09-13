@@ -1,0 +1,395 @@
+{
+  "positions": {
+    "totalPositions": 17,
+    "totalInvested": 50000,
+    "totalPnL": 2450.75
+  },
+  "wallets": {
+    "dematWallet": {
+      "balance": 40000.75,
+      "count": 2
+    },
+    "bankWallet": {
+      "balance": 15000.50,
+      "count": 1
+    },
+    "totalBalance": 55001.25,
+    "recentActivity": [
+      {
+        "id": "activity1",
+        "walletId": "wallet1",
+        "walletName": "Delta Exchange Wallet",
+        "action": "balance_update",
+        "previousBalance": 20000.50,
+        "newBalance": 25000.50,
+        "amount": 5000,
+        "description": "Deposit from bank transfer",
+        "timestamp": "2025-09-13T07:30:00.000Z"
+      },
+      {
+        "id": "activity2",
+        "walletId": "wallet2",
+        "walletName": "Groww Wallet",
+        "action": "wallet_created",
+        "newBalance": 15000.25,
+        "amount": 15000.25,
+        "description": "New demat account created",
+        "timestamp": "2025-09-12T14:20:00.000Z"
+      },
+      {
+        "id": "activity3",
+        "walletId": "wallet3",
+        "walletName": "Bank Account",
+        "action": "deposit",
+        "previousBalance": 10000.50,
+        "newBalance": 15000.50,
+        "amount": 5000,
+        "description": "Salary deposit",
+        "timestamp": "2025-09-11T10:15:00.000Z"
+      }
+    ]
+  },
+  "transactions": {
+    "deposits": {
+      "list": [
+        {
+          "id": "dep1",
+          "userId": "user123",
+          "amount": 5000,
+          "method": "Bank Transfer",
+          "description": "Monthly deposit",
+          "status": "completed",
+          "requestedAt": "2025-09-10T10:00:00.000Z",
+          "completedAt": "2025-09-10T12:00:00.000Z"
+        },
+        {
+          "id": "dep2",
+          "userId": "user123",
+          "amount": 2000,
+          "method": "UPI",
+          "description": "Quick top-up",
+          "status": "pending",
+          "requestedAt": "2025-09-13T07:00:00.000Z"
+        }
+      ],
+      "total": 7000,
+      "pending": 1,
+      "completed": 1,
+      "recentActivity": [
+        {
+          "id": "dep4",
+          "userId": "user123",
+          "amount": 10000,
+          "method": "Wire Transfer",
+          "description": "Large investment deposit",
+          "status": "completed",
+          "requestedAt": "2025-09-12T15:30:00.000Z",
+          "completedAt": "2025-09-12T17:45:00.000Z"
+        },
+        {
+          "id": "dep3",
+          "userId": "user123",
+          "amount": 3500,
+          "method": "Credit Card",
+          "description": "Emergency funding",
+          "status": "completed",
+          "requestedAt": "2025-09-11T09:15:00.000Z",
+          "completedAt": "2025-09-11T09:20:00.000Z"
+        },
+        {
+          "id": "dep1",
+          "userId": "user123",
+          "amount": 5000,
+          "method": "Bank Transfer",
+          "description": "Monthly deposit",
+          "status": "completed",
+          "requestedAt": "2025-09-10T10:00:00.000Z",
+          "completedAt": "2025-09-10T12:00:00.000Z"
+        }
+      ],
+      "chartData": {
+        "weekly": [
+          {
+            "period": "2025-W36",
+            "totalAmount": 18500,
+            "count": 3,
+            "pendingAmount": 0,
+            "completedAmount": 18500,
+            "pendingCount": 0,
+            "completedCount": 3
+          },
+          {
+            "period": "2025-W37",
+            "totalAmount": 2000,
+            "count": 1,
+            "pendingAmount": 2000,
+            "completedAmount": 0,
+            "pendingCount": 1,
+            "completedCount": 0
+          }
+        ],
+        "monthly": [
+          {
+            "period": "2025-08",
+            "totalAmount": 45000,
+            "count": 8,
+            "pendingAmount": 2000,
+            "completedAmount": 43000,
+            "pendingCount": 1,
+            "completedCount": 7
+          },
+          {
+            "period": "2025-09",
+            "totalAmount": 20500,
+            "count": 4,
+            "pendingAmount": 2000,
+            "completedAmount": 18500,
+            "pendingCount": 1,
+            "completedCount": 3
+          }
+        ],
+        "yearly": [
+          {
+            "period": "2024",
+            "totalAmount": 285000,
+            "count": 42,
+            "pendingAmount": 0,
+            "completedAmount": 285000,
+            "pendingCount": 0,
+            "completedCount": 42
+          },
+          {
+            "period": "2025",
+            "totalAmount": 195000,
+            "count": 28,
+            "pendingAmount": 5000,
+            "completedAmount": 190000,
+            "pendingCount": 2,
+            "completedCount": 26
+          }
+        ]
+      }
+    },
+    "withdrawals": {
+      "list": [
+        {
+          "id": "with1",
+          "userId": "user123",
+          "amount": 1500,
+          "method": "Bank Transfer",
+          "description": "Profit withdrawal",
+          "status": "completed",
+          "requestedAt": "2025-09-08T14:00:00.000Z",
+          "completedAt": "2025-09-08T16:00:00.000Z"
+        }
+      ],
+      "total": 1500,
+      "pending": 0,
+      "completed": 1,
+      "recentActivity": [
+        {
+          "id": "with3",
+          "userId": "user123",
+          "amount": 2500,
+          "method": "UPI",
+          "description": "Emergency withdrawal",
+          "status": "pending",
+          "requestedAt": "2025-09-13T06:00:00.000Z"
+        },
+        {
+          "id": "with2",
+          "userId": "user123",
+          "amount": 3000,
+          "method": "Bank Transfer",
+          "description": "Monthly profit withdrawal",
+          "status": "completed",
+          "requestedAt": "2025-09-10T10:00:00.000Z",
+          "completedAt": "2025-09-10T14:30:00.000Z"
+        },
+        {
+          "id": "with1",
+          "userId": "user123",
+          "amount": 1500,
+          "method": "Bank Transfer",
+          "description": "Profit withdrawal",
+          "status": "completed",
+          "requestedAt": "2025-09-08T14:00:00.000Z",
+          "completedAt": "2025-09-08T16:00:00.000Z"
+        }
+      ],
+      "chartData": {
+        "weekly": [
+          {
+            "period": "2025-W36",
+            "totalAmount": 4500,
+            "count": 2,
+            "pendingAmount": 0,
+            "completedAmount": 4500,
+            "pendingCount": 0,
+            "completedCount": 2
+          },
+          {
+            "period": "2025-W37",
+            "totalAmount": 2500,
+            "count": 1,
+            "pendingAmount": 2500,
+            "completedAmount": 0,
+            "pendingCount": 1,
+            "completedCount": 0
+          }
+        ],
+        "monthly": [
+          {
+            "period": "2025-08",
+            "totalAmount": 12000,
+            "count": 4,
+            "pendingAmount": 1000,
+            "completedAmount": 11000,
+            "pendingCount": 1,
+            "completedCount": 3
+          },
+          {
+            "period": "2025-09",
+            "totalAmount": 7000,
+            "count": 3,
+            "pendingAmount": 2500,
+            "completedAmount": 4500,
+            "pendingCount": 1,
+            "completedCount": 2
+          }
+        ],
+        "yearly": [
+          {
+            "period": "2024",
+            "totalAmount": 85000,
+            "count": 24,
+            "pendingAmount": 0,
+            "completedAmount": 85000,
+            "pendingCount": 0,
+            "completedCount": 24
+          },
+          {
+            "period": "2025",
+            "totalAmount": 67000,
+            "count": 18,
+            "pendingAmount": 3500,
+            "completedAmount": 63500,
+            "pendingCount": 2,
+            "completedCount": 16
+          }
+        ]
+      }
+    }
+  },
+  "tradePnL": {
+    "today": {
+      "profit": 2500,
+      "loss": 500,
+      "netPnL": 2000,
+      "trades": 15
+    },
+    "recent": [
+      {
+        "id": "pnl1",
+        "date": "2025-09-13",
+        "profit": 2500,
+        "loss": 500,
+        "netPnL": 2000,
+        "notes": "Good trading day",
+        "totalTrades": 15,
+        "winningTrades": 12,
+        "losingTrades": 3,
+        "userId": "user123",
+        "createdAt": "2025-09-13T08:00:00.000Z",
+        "updatedAt": "2025-09-13T08:00:00.000Z"
+      },
+      {
+        "id": "pnl2",
+        "date": "2025-09-12",
+        "profit": 1800,
+        "loss": 300,
+        "netPnL": 1500,
+        "totalTrades": 10,
+        "winningTrades": 8,
+        "losingTrades": 2,
+        "userId": "user123",
+        "createdAt": "2025-09-12T08:00:00.000Z",
+        "updatedAt": "2025-09-12T08:00:00.000Z"
+      }
+    ],
+    "statistics": {
+      "period": "30 days",
+      "totalProfit": 45000,
+      "totalLoss": 8500,
+      "netPnL": 36500,
+      "totalTrades": 150,
+      "winningTrades": 105,
+      "losingTrades": 45,
+      "winRate": "70.00%",
+      "averageDailyPnL": "1216.67",
+      "daysTraded": 30
+    },
+    "chartData": {
+      "weekly": [
+        {
+          "period": "2025-W36",
+          "profit": 8500,
+          "loss": 1200,
+          "netPnL": 7300,
+          "totalTrades": 45,
+          "winningTrades": 35,
+          "losingTrades": 10
+        },
+        {
+          "period": "2025-W37",
+          "profit": 12000,
+          "loss": 2100,
+          "netPnL": 9900,
+          "totalTrades": 52,
+          "winningTrades": 40,
+          "losingTrades": 12
+        }
+      ],
+      "monthly": [
+        {
+          "period": "2025-08",
+          "profit": 28000,
+          "loss": 5200,
+          "netPnL": 22800,
+          "totalTrades": 180,
+          "winningTrades": 125,
+          "losingTrades": 55
+        },
+        {
+          "period": "2025-09",
+          "profit": 32500,
+          "loss": 6800,
+          "netPnL": 25700,
+          "totalTrades": 195,
+          "winningTrades": 140,
+          "losingTrades": 55
+        }
+      ],
+      "yearly": [
+        {
+          "period": "2024",
+          "profit": 185000,
+          "loss": 42000,
+          "netPnL": 143000,
+          "totalTrades": 1250,
+          "winningTrades": 875,
+          "losingTrades": 375
+        },
+        {
+          "period": "2025",
+          "profit": 195000,
+          "loss": 38000,
+          "netPnL": 157000,
+          "totalTrades": 1100,
+          "winningTrades": 820,
+          "losingTrades": 280
+        }
+      ]
+    }
+  }
+}

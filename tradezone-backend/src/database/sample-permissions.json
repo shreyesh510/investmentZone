@@ -1,0 +1,16 @@
+[
+  {
+    "userId": "1",
+    "permissions": {
+      "AiChat": true,
+      "investment": true
+    }
+  },
+  {
+    "userId": "2", 
+    "permissions": {
+      "AiChat": false,
+      "investment": false
+    }
+  }
+]

@@ -1,0 +1,5 @@
+[33m92ea519[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m)[m Remove hardcoded OpenAI API key from env.ts
+[33m0fbf861[m add cron job to delete msg
+[33m8ce3f8d[m add open ai api and fix refresh issue of chart
+[33m9c663c1[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/dev[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m add few features
+[33mf448c1f[m default dark mode on
