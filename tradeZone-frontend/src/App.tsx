@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { initializeAuth } from './redux/slices/authSlice';
 import type { AppDispatch, RootState } from './redux/store';
@@ -10,6 +10,30 @@ import { SocketProvider } from './contexts/SocketContext';
 import ToastContainer from './components/toast/toastContainer';
 import { createAppRoutes } from './routes/AppRoutes';
 import './index.css';
+
+// Component to manage body classes based on route
+function RouteManager() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+    if (isAuthPage) {
+      // Remove app-mode class for auth pages (allow scrolling)
+      document.body.classList.remove('app-mode');
+    } else {
+      // Add app-mode class for app pages (prevent scrolling)
+      document.body.classList.add('app-mode');
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('app-mode');
+    };
+  }, [location.pathname]);
+
+  return null;
+}
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -52,13 +76,14 @@ function App() {
         <ToastProvider>
           <SocketProvider>
           <Router>
+            <RouteManager />
             <div className="App h-full w-full overflow-hidden">
               <Routes>
                 {createAppRoutes({ isAuthenticated }).map((route, index) => (
                   <Route key={index} {...route} />
                 ))}
               </Routes>
-              
+
               {/* Global Toast Container */}
               <ToastContainer />
             </div>

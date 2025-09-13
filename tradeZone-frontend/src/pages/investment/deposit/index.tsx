@@ -1,8 +1,5 @@
 import { memo, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
@@ -12,11 +9,6 @@ import { fetchDeposits, createDeposit, updateDeposit, deleteDeposit } from '../.
 import ConfirmModal from '../../../components/modal/confirmModal';
 import { AddDepositModal, EditDepositModal } from './components/modal';
 
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  socketId: string;
-}
 
 // Using API DTO via Redux now
 // interface kept for local computations if needed
@@ -33,8 +25,6 @@ const Deposit = memo(function Deposit() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
@@ -86,9 +76,6 @@ const Deposit = memo(function Deposit() {
     };
   }, [dispatch]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
 
   const isDarkMode = settings.theme === 'dark';
@@ -746,16 +733,8 @@ const Deposit = memo(function Deposit() {
   );
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header 
-        onlineUsers={onlineUsers} 
-        sidebarOpen={sidebarOpen} 
-        onSidebarToggle={toggleSidebar} 
-      />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {content}
-      </div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+      {content}
 
       {/* Delete confirm modal */}
       <ConfirmModal

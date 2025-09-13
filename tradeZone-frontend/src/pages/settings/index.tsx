@@ -2,15 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { logoutUser } from '../../redux/slices/authSlice';
-import { 
-  useSettings, 
-  cryptoOptions, 
-  timeframeOptions, 
-  chartStyleOptions 
+import {
+  useSettings,
+  cryptoOptions,
+  timeframeOptions,
+  chartStyleOptions
 } from '../../contexts/settingsContext';
-import Header from '../../layouts/Header';
-import Sidebar from '../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../components/button/floatingButton';
 
 interface OnlineUser {
   userId: string;
@@ -26,26 +23,6 @@ const Settings: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const [userPermissions, setUserPermissions] = useState<any>(null);
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>('settings');
-
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      const isMobileView = window.innerWidth < 768;
-      setIsMobile(isMobileView);
-      // Open sidebar by default on desktop
-      if (!isMobileView && !sidebarOpen) {
-        setSidebarOpen(true);
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [sidebarOpen]);
 
   // Load permissions from localStorage
   useEffect(() => {
@@ -80,14 +57,6 @@ const Settings: React.FC = () => {
     setTimeout(() => setShowSaveSuccess(false), 2000);
   };
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleTabChange = (tab: MobileTab) => {
-    setActiveTab(tab);
-  };
-
   const goBack = () => {
     navigate('/zone');
   };
@@ -97,58 +66,8 @@ const Settings: React.FC = () => {
     navigate('/');
   };
 
-  // Use settings for theme
-  const isDarkMode = settings.theme === 'dark';
-
-  // Mobile view - show settings in mobile layout
-  if (isMobile) {
-    return (
-      <div 
-        className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col fixed inset-0 overflow-hidden`}
-        style={{ 
-          height: '100svh',
-          minHeight: '100vh',
-          maxHeight: '100vh',
-          width: '100vw',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingBottom: '0px',
-          margin: '0px'
-        }}
-      >
-        {/* Content - full screen settings */}
-        <div className="flex-1 overflow-hidden" style={{ height: '100vh' }}>
-          {renderSettingsContent()}
-        </div>
-
-        {/* Floating Navigation */}
-        <FloatingButton activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
-    );
-  }
-
-  // Desktop view - with Header and Sidebar
-  return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      {/* Top Header */}
-      <Header 
-        onlineUsers={onlineUsers} 
-        sidebarOpen={sidebarOpen} 
-        onSidebarToggle={toggleSidebar} 
-      />
-
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-
-      {/* Main Content - Settings */}
-      <div className="flex-1 overflow-hidden">
-        {renderSettingsContent()}
-      </div>
-    </div>
-  );
+  // Return just the settings content - AppLayout handles the wrapper
+  return renderSettingsContent();
 
   // Settings content component
   function renderSettingsContent() {

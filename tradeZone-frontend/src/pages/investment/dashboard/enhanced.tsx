@@ -1,8 +1,5 @@
 import { memo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
@@ -19,11 +16,6 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  socketId: string;
-}
 
 type TimeFilter = '1W' | '1M' | '6M' | '1Y';
 
@@ -33,8 +25,6 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
   
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
@@ -66,9 +56,6 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
     dispatch(fetchDashboardSummary(days));
   }, [dispatch, selectedTimeFilter]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   const handleTabChange = (tab: MobileTab) => {
     setActiveTab(tab);
@@ -697,16 +684,8 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
   }
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header 
-        onlineUsers={onlineUsers} 
-        sidebarOpen={sidebarOpen} 
-        onSidebarToggle={toggleSidebar} 
-      />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {content}
-      </div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+      {content}
     </div>
   );
 });

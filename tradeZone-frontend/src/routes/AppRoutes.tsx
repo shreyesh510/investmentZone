@@ -11,6 +11,7 @@ import Deposit from '../pages/investment/deposit';
 import WalletsPage from '../pages/investment/wallets';
 import TradePnL from '../pages/investment/tradePnl';
 import ProtectedRoute from './ProtectedRoute';
+import AppLayout from '../layouts/AppLayout';
 
 interface AppRoutesConfig {
   isAuthenticated: boolean;
@@ -25,7 +26,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/zone',
     element: (
       <ProtectedRoute>
-        <Zone />
+        <AppLayout>
+          <Zone />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -33,7 +36,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/settings',
     element: (
       <ProtectedRoute>
-        <Settings />
+        <AppLayout>
+          <Settings />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -41,7 +46,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/chart',
     element: (
       <ProtectedRoute>
-        <LiveChart />
+        <AppLayout>
+          <LiveChart />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -50,7 +57,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/positions',
     element: (
       <ProtectedRoute>
-        <Positions />
+        <AppLayout>
+          <Positions />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -58,7 +67,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/dashboard',
     element: (
       <ProtectedRoute>
-        <InvestmentDashboard />
+        <AppLayout>
+          <InvestmentDashboard />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -66,7 +77,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/withdraw',
     element: (
       <ProtectedRoute>
-        <Withdraw />
+        <AppLayout>
+          <Withdraw />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -74,7 +87,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/deposit',
     element: (
       <ProtectedRoute>
-        <Deposit />
+        <AppLayout>
+          <Deposit />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -82,7 +97,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/wallets',
     element: (
       <ProtectedRoute>
-        <WalletsPage />
+        <AppLayout>
+          <WalletsPage />
+        </AppLayout>
       </ProtectedRoute>
     )
   },
@@ -90,7 +107,9 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     path: '/investment/tradePnl',
     element: (
       <ProtectedRoute>
-        <TradePnL />
+        <AppLayout>
+          <TradePnL />
+        </AppLayout>
       </ProtectedRoute>
     )
   },

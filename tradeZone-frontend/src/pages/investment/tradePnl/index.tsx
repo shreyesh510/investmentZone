@@ -4,9 +4,6 @@ import { toast } from 'react-toastify';
 import { useSettings } from '../../../contexts/settingsContext';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../../hooks/usePermissions';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import type { RootState, AppDispatch } from '../../../redux/store';
 import { 
   fetchTradePnL, 
@@ -22,19 +19,12 @@ import ImportTradePnLModal from './components/importTradePnLModal';
 import ConfirmModal from '../../../components/modal/confirmModal';
 import RoundedButton from '../../../components/button/RoundedButton';
 
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  socketId: string;
-}
 
 const TradePnL = memo(function TradePnL() {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   
@@ -79,7 +69,6 @@ const TradePnL = memo(function TradePnL() {
     dispatch(fetchTradePnLStatistics(parseInt(filters.dataFilter))); // Use same filter for statistics
   }, [dispatch, filters]);
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const handleTabChange = (tab: MobileTab) => setActiveTab(tab);
 
   // Handler functions
@@ -445,10 +434,8 @@ const TradePnL = memo(function TradePnL() {
   }
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header onlineUsers={onlineUsers} sidebarOpen={sidebarOpen} onSidebarToggle={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">{content}</div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+      {content}
 
       {/* Add Modal */}
       {showAddModal && (

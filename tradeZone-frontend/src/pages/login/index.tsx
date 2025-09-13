@@ -69,17 +69,17 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 py-8 px-4">
+      <div className="max-w-md w-full mx-auto space-y-8">
         <ConnectionTest />
-        
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to your account</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+            <p className="text-gray-600 text-sm sm:text-base">Sign in to your account</p>
           </div>
 
-          <div className="mt-8 space-y-6">
+          <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
                 {error}

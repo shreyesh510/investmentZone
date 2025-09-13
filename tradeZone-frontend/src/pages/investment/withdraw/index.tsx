@@ -1,8 +1,5 @@
 import { memo, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
@@ -11,12 +8,16 @@ import type { AppDispatch, RootState } from '../../../redux/store';
 import { fetchWithdrawals, createWithdrawal, updateWithdrawal, deleteWithdrawal } from '../../../redux/thunks/withdrawals/withdrawalsThunks';
 import ConfirmModal from '../../../components/modal/confirmModal';
 import { AddWithdrawModal, EditWithdrawModal } from './components/modal';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  socketId: string;
-}
 
 // Deprecated local type kept for context; using API DTO via Redux now
 interface WithdrawalRecord {
@@ -33,12 +34,21 @@ interface ChartDataPoint {
 
 type TimeFilter = '1M' | '1W' | '6M' | '1Y' | '5Y';
 
+// Helper functions for formatting
+const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
+const formatCurrencyWithUSD = (amount: number) => {
+  const usdAmount = (amount / 89).toFixed(2);
+  return {
+    inr: `₹${amount.toLocaleString()}`,
+    usd: `$${usdAmount}`
+  };
+};
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
+
 const Withdraw = memo(function Withdraw() {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
@@ -90,9 +100,6 @@ const Withdraw = memo(function Withdraw() {
     };
   }, [dispatch]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
 
   const isDarkMode = settings.theme === 'dark';
@@ -102,7 +109,7 @@ const Withdraw = memo(function Withdraw() {
     const now = new Date();
     const dataPoints: ChartDataPoint[] = [];
     let days = 30; // Default 1M
-    
+
     switch (timeFilter) {
       case '1W': days = 7; break;
       case '1M': days = 30; break;
@@ -111,187 +118,58 @@ const Withdraw = memo(function Withdraw() {
       case '5Y': days = 1825; break;
     }
 
-    // Generate withdrawal data for the selected period
+    // Filter withdrawals within the selected time period first
+    const cutoffDate = new Date(now);
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const filteredWithdrawals = withdrawals.filter(w => {
+      const withdrawalDate = new Date((w as any).requestedAt);
+      return withdrawalDate >= cutoffDate && withdrawalDate <= now;
+    });
+
+    // Generate daily cumulative data for the selected period
     for (let i = days; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      
-      // Calculate total withdrawals up to this date
+
+      // Calculate withdrawals made on or before this date (within the filtered set)
       const dateStr = date.toISOString().split('T')[0];
-      const withdrawalsUpToDate = withdrawals.filter(w => 
+      const withdrawalsUpToDate = filteredWithdrawals.filter(w =>
         new Date((w as any).requestedAt) <= date
       );
       const totalAmount = withdrawalsUpToDate.reduce((sum, w) => sum + w.amount, 0);
-      
+
       dataPoints.push({
         date: dateStr,
         amount: totalAmount
       });
     }
-    
+
     return dataPoints;
   };
 
   const chartData = generateChartData(selectedTimeFilter);
 
-  // Enhanced Line Chart Component
-  const LineChart: React.FC<{ data: ChartDataPoint[]; height?: number }> = ({ data, height = 320 }) => {
-    if (data.length === 0) {
+  // Custom Tooltip Component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
       return (
-        <div 
-          className={`flex items-center justify-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}
-          style={{ height }}
-        >
-          <div className="text-center">
-            <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <p className="text-lg font-medium">No withdrawal data</p>
-            <p className="text-sm opacity-75">Data will appear here once you make withdrawals</p>
-          </div>
+        <div className={`rounded-lg border p-3 shadow-lg ${
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700 text-white'
+            : 'bg-white border-gray-300 text-gray-900'
+        }`}>
+          <p className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {formatDate(label)}
+          </p>
+          <p className="font-bold text-red-500">
+            {formatCurrency(data.value)}
+          </p>
         </div>
       );
     }
-
-    const maxAmount = Math.max(...data.map(d => d.amount));
-    const minAmount = Math.min(...data.map(d => d.amount));
-    const amountRange = maxAmount - minAmount || 1;
-    const width = 100; // SVG width percentage
-    const padding = 5; // Padding for better visual
-
-    const pathData = data.map((point, index) => {
-      const x = (index / (data.length - 1)) * (width - padding * 2) + padding;
-      const y = height - padding - ((point.amount - minAmount) / amountRange) * (height - padding * 2);
-      return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
-    }).join(' ');
-
-    const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
-    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
-
-    return (
-      <div className="relative" style={{ height }}>
-        {/* Y-axis labels */}
-        <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-2 pr-2">
-          {[maxAmount, (maxAmount + minAmount) / 2, minAmount].map((value, index) => (
-            <span key={index} className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {formatCurrency(value)}
-            </span>
-          ))}
-        </div>
-
-        <svg
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${width} ${height}`}
-          className="absolute inset-0 ml-16"
-        >
-          {/* Enhanced Grid lines */}
-          <defs>
-            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path 
-                d="M 10 0 L 0 0 0 10" 
-                fill="none" 
-                stroke={isDarkMode ? '#374151' : '#E5E7EB'} 
-                strokeWidth="0.3"
-              />
-            </pattern>
-            <linearGradient id="withdrawalGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#EF4444" stopOpacity="0.4" />
-              <stop offset="50%" stopColor="#F87171" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#FCA5A5" stopOpacity="0.05" />
-            </linearGradient>
-          </defs>
-
-          {/* Grid background */}
-          <rect width={width} height={height} fill="url(#grid)" opacity="0.3" />
-          
-          {/* Horizontal reference lines */}
-          {[25, 50, 75].map(y => (
-            <line
-              key={y}
-              x1={padding}
-              y1={y * height / 100}
-              x2={width - padding}
-              y2={y * height / 100}
-              stroke={isDarkMode ? '#4B5563' : '#D1D5DB'}
-              strokeWidth="1"
-              strokeDasharray="3,3"
-              opacity="0.5"
-            />
-          ))}
-          
-          {/* Area under curve with enhanced gradient */}
-          <path
-            d={`${pathData} L ${width - padding} ${height - padding} L ${padding} ${height - padding} Z`}
-            fill="url(#withdrawalGradient)"
-          />
-          
-          {/* Main line with shadow effect */}
-          <path
-            d={pathData}
-            fill="none"
-            stroke="#DC2626"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3))"
-          />
-          
-          {/* Enhanced data points with hover effects */}
-          {data.map((point, index) => {
-            const x = (index / (data.length - 1)) * (width - padding * 2) + padding;
-            const y = height - padding - ((point.amount - minAmount) / amountRange) * (height - padding * 2);
-            
-            return (
-              <g key={index}>
-                {/* Outer glow */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="6"
-                  fill="#EF4444"
-                  opacity="0.2"
-                  className="animate-pulse"
-                />
-                {/* Main point */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="4"
-                  fill="#DC2626"
-                  stroke="#fff"
-                  strokeWidth="2"
-                  className="hover:r-6 transition-all cursor-pointer"
-                />
-                {/* Tooltip trigger */}
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="10"
-                  fill="transparent"
-                  className="cursor-pointer"
-                >
-                  <title>{`${formatDate(point.date)}: ${formatCurrency(point.amount)}`}</title>
-                </circle>
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* X-axis labels */}
-        <div className="absolute bottom-0 left-16 right-0 flex justify-between px-2">
-          {data.length > 1 && [
-            formatDate(data[0].date),
-            data.length > 2 ? formatDate(data[Math.floor(data.length / 2)].date) : null,
-            formatDate(data[data.length - 1].date)
-          ].filter(Boolean).map((date, index) => (
-            <span key={index} className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              {date}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
+    return null;
   };
 
   const handleWithdrawSubmit = async (data: { amount: number; platform: string; description: string }) => {
@@ -310,42 +188,50 @@ const Withdraw = memo(function Withdraw() {
   };
 
 
-  // Filter and sort withdrawals
-  const filteredWithdrawals = withdrawals
-    .filter(withdrawal => {
+  // Filter withdrawals based on selected time filter and search query
+  const getTimeFilteredWithdrawals = () => {
+    const now = new Date();
+    let cutoffDate = new Date();
+
+    switch (selectedTimeFilter) {
+      case '1W': cutoffDate.setDate(now.getDate() - 7); break;
+      case '1M': cutoffDate.setDate(now.getDate() - 30); break; // Use days instead of months for consistency
+      case '6M': cutoffDate.setDate(now.getDate() - 180); break; // Use days instead of months for consistency
+      case '1Y': cutoffDate.setDate(now.getDate() - 365); break; // Use days instead of years for consistency
+      case '5Y': cutoffDate.setDate(now.getDate() - 1825); break; // Use days instead of years for consistency
+    }
+
+    return withdrawals.filter(withdrawal => {
       const withdrawalDate = new Date((withdrawal as any).requestedAt);
-      const now = new Date();
-      let cutoffDate = new Date();
+      return withdrawalDate >= cutoffDate && withdrawalDate <= now;
+    });
+  };
 
-      switch (selectedTimeFilter) {
-        case '1W': cutoffDate.setDate(now.getDate() - 7); break;
-        case '1M': cutoffDate.setMonth(now.getMonth() - 1); break;
-        case '6M': cutoffDate.setMonth(now.getMonth() - 6); break;
-        case '1Y': cutoffDate.setFullYear(now.getFullYear() - 1); break;
-        case '5Y': cutoffDate.setFullYear(now.getFullYear() - 5); break;
-      }
+  // Get time-filtered withdrawals for statistics
+  const timeFilteredWithdrawals = getTimeFilteredWithdrawals();
 
-      const matchesTimeFilter = withdrawalDate >= cutoffDate;
-      const matchesSearch = searchQuery === '' || 
+  // Filter and sort withdrawals for display (includes search filter)
+  const filteredWithdrawals = timeFilteredWithdrawals
+    .filter(withdrawal => {
+      const matchesSearch = searchQuery === '' ||
         withdrawal.amount.toString().includes(searchQuery) ||
         (withdrawal.description && withdrawal.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesTimeFilter && matchesSearch;
+      return matchesSearch;
     })
     .sort((a, b) => {
       const aValue = sortBy === 'date' ? new Date((a as any).requestedAt).getTime() : a.amount;
       const bValue = sortBy === 'date' ? new Date((b as any).requestedAt).getTime() : b.amount;
-      
-      return sortOrder === 'asc' ? 
-        (aValue > bValue ? 1 : -1) : 
+
+      return sortOrder === 'asc' ?
+        (aValue > bValue ? 1 : -1) :
         (aValue < bValue ? 1 : -1);
     });
 
-  const totalWithdrawals = filteredWithdrawals.reduce((sum, w) => sum + w.amount, 0);
-  
-  // Statistics calculations
-  const avgWithdrawal = filteredWithdrawals.length > 0 ? totalWithdrawals / filteredWithdrawals.length : 0;
-  const maxWithdrawal = filteredWithdrawals.length > 0 ? Math.max(...filteredWithdrawals.map(w => w.amount)) : 0;
+  // Statistics calculations based on time-filtered data (not search-filtered)
+  const totalWithdrawals = timeFilteredWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+  const avgWithdrawal = timeFilteredWithdrawals.length > 0 ? totalWithdrawals / timeFilteredWithdrawals.length : 0;
+  const maxWithdrawal = timeFilteredWithdrawals.length > 0 ? Math.max(...timeFilteredWithdrawals.map(w => w.amount)) : 0;
 
   const content = (
     <div className={`flex-1 p-6 overflow-y-auto ${
@@ -467,7 +353,10 @@ const Withdraw = memo(function Withdraw() {
                   <div>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Withdrawn ({selectedTimeFilter})</p>
                     <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${totalWithdrawals.toLocaleString()}
+                      {formatCurrencyWithUSD(totalWithdrawals).inr}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      {formatCurrencyWithUSD(totalWithdrawals).usd}
                     </p>
                   </div>
                 </div>
@@ -485,7 +374,10 @@ const Withdraw = memo(function Withdraw() {
                   <div>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg. Withdrawal</p>
                     <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${avgWithdrawal.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {formatCurrencyWithUSD(avgWithdrawal).inr}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      {formatCurrencyWithUSD(avgWithdrawal).usd}
                     </p>
                   </div>
                 </div>
@@ -503,7 +395,10 @@ const Withdraw = memo(function Withdraw() {
                   <div>
                     <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Largest Withdrawal</p>
                     <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${maxWithdrawal.toLocaleString()}
+                      {formatCurrencyWithUSD(maxWithdrawal).inr}
+                    </p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                      {formatCurrencyWithUSD(maxWithdrawal).usd}
                     </p>
                   </div>
                 </div>
@@ -640,7 +535,47 @@ const Withdraw = memo(function Withdraw() {
               </div>
             </div>
             <div className="h-80">
-              <LineChart data={chartData} height={320} />
+              {chartData.length === 0 ? (
+                <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className="text-center">
+                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-lg font-medium">No withdrawal data</p>
+                    <p className="text-sm opacity-75">Data will appear here once you make withdrawals</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={isDarkMode ? '#374151' : '#E5E7EB'}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                      fontSize={12}
+                      tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis
+                      stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                      fontSize={12}
+                      tickFormatter={formatCurrency}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#DC2626"
+                      strokeWidth={3}
+                      dot={{ fill: '#DC2626', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: '#EF4444' }}
+                      name="Withdrawn Amount"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
@@ -670,7 +605,10 @@ const Withdraw = memo(function Withdraw() {
                 }`}>
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
-                      <p className="font-bold text-lg">${withdrawal.amount.toLocaleString()}</p>
+                      <p className="font-bold text-lg">{formatCurrencyWithUSD(withdrawal.amount).inr}</p>
+                      <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+                        {formatCurrencyWithUSD(withdrawal.amount).usd}
+                      </p>
                       <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                         {new Date((withdrawal as any).requestedAt).toLocaleDateString()}
                       </p>
@@ -747,16 +685,8 @@ const Withdraw = memo(function Withdraw() {
   );
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header 
-        onlineUsers={onlineUsers} 
-        sidebarOpen={sidebarOpen} 
-        onSidebarToggle={toggleSidebar} 
-      />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {content}
-      </div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+      {content}
 
       {/* Delete confirm modal */}
       <ConfirmModal
