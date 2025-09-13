@@ -33,6 +33,7 @@ interface ChartDataPoint {
 }
 
 type TimeFilter = '1M' | '1W' | '6M' | '1Y' | '5Y';
+type MobileTab = 'chart' | 'list';
 
 // Helper functions for formatting
 const formatCurrency = (amount: number) => `₹${amount.toLocaleString()}`;
@@ -234,11 +235,11 @@ const Withdraw = memo(function Withdraw() {
   const maxWithdrawal = timeFilteredWithdrawals.length > 0 ? Math.max(...timeFilteredWithdrawals.map(w => w.amount)) : 0;
 
   const content = (
-    <div className={`flex-1 p-6 overflow-y-auto ${
+    <div className={`flex-1 p-3 sm:p-6 overflow-y-auto overflow-x-hidden ${
       isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
     }`}>
       {/* Page Header */}
-      <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-8 ${
+      <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border mb-6 sm:mb-8 ${
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -252,7 +253,7 @@ const Withdraw = memo(function Withdraw() {
           </div>
           
           {/* Quick Actions */}
-          <div className="flex items-center space-x-3 mt-4 md:mt-0">
+          <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0">
             <button
               onClick={() => setShowWithdrawModal(true)}
               className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-medium rounded-xl transition-all duration-300 hover:scale-105"
@@ -302,23 +303,23 @@ const Withdraw = memo(function Withdraw() {
         </div>
       </div>
 
-      {/* 75% - 25% Layout Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      {/* Responsive Layout Split */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
         
-        {/* Main Content Area - 75% */}
-        <div className="lg:col-span-3 space-y-8">
+        {/* Main Content Area */}
+        <div className="xl:col-span-3 space-y-6">
           
           {/* Enhanced Statistics Cards with Timeframe */}
-          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+          <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
             isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
           }`}>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between mb-6">
               <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 Statistics Overview
               </h3>
               
               {/* Timeframe Selector */}
-              <div className="flex gap-2 mt-4 lg:mt-0">
+              <div className="flex flex-wrap gap-2 mt-4 xl:mt-0">
                 <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center mr-2`}>
                   Period:
                 </span>
@@ -340,7 +341,7 @@ const Withdraw = memo(function Withdraw() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
                 isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
               }`}>
@@ -407,10 +408,10 @@ const Withdraw = memo(function Withdraw() {
           </div>
 
           {/* Enhanced Filters Section */}
-          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+          <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
             isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
           }`}>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
               {/* Search and Sort */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Search */}
@@ -507,7 +508,7 @@ const Withdraw = memo(function Withdraw() {
           </div>
 
           {/* Withdrawal Chart */}
-          <div className={`p-8 rounded-2xl backdrop-blur-lg border ${
+          <div className={`p-4 sm:p-6 lg:p-8 rounded-2xl backdrop-blur-lg border ${
             isDarkMode 
               ? 'bg-gray-800/30 border-gray-700/50 shadow-xl shadow-gray-900/20' 
               : 'bg-white/60 border-white/20 shadow-xl shadow-gray-900/10'
@@ -534,7 +535,7 @@ const Withdraw = memo(function Withdraw() {
                 </button>
               </div>
             </div>
-            <div className="h-80">
+            <div className="h-64 sm:h-80">
               {chartData.length === 0 ? (
                 <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="text-center">
@@ -580,15 +581,15 @@ const Withdraw = memo(function Withdraw() {
           </div>
         </div>
 
-        {/* Recent Activity Sidebar - 25% */}
-        <div className={`lg:col-span-1 p-6 rounded-2xl backdrop-blur-lg border ${
+        {/* Recent Activity Sidebar */}
+        <div className={`xl:col-span-1 p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
           isDarkMode 
             ? 'bg-gray-800/30 border-gray-700/50 shadow-xl shadow-gray-900/20' 
             : 'bg-white/60 border-white/20 shadow-xl shadow-gray-900/10'
         }`}>
           <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
           
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+          <div className="space-y-3 max-h-[400px] sm:max-h-[600px] overflow-y-auto">
             {filteredWithdrawals.length === 0 ? (
               <div className={`text-center py-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -685,7 +686,7 @@ const Withdraw = memo(function Withdraw() {
   );
 
   return (
-    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col overflow-hidden`}>
       {content}
 
       {/* Delete confirm modal */}

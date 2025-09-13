@@ -1,11 +1,26 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { tradePnLApi, type TradePnLDto } from '../../../services/tradePnLApi';
+import { tradePnLApi, type TradePnLDto, type TradePnLPaginatedResponse } from '../../../services/tradePnLApi';
 
 export const fetchTradePnL = createAsyncThunk<TradePnLDto[], number | undefined, { rejectValue: string }>(
   'tradePnL/fetch',
   async (days, { rejectWithValue }) => {
     try {
       return await tradePnLApi.list(days);
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message || 'Failed to fetch trade P&L records');
+    }
+  },
+);
+
+export const fetchTradePnLPaginated = createAsyncThunk<
+  TradePnLPaginatedResponse,
+  { days?: number; page?: number; limit?: number },
+  { rejectValue: string }
+>(
+  'tradePnL/fetchPaginated',
+  async ({ days, page = 1, limit = 10 }, { rejectWithValue }) => {
+    try {
+      return await tradePnLApi.listPaginated(days, page, limit);
     } catch (err: any) {
       return rejectWithValue(err?.response?.data?.message || 'Failed to fetch trade P&L records');
     }

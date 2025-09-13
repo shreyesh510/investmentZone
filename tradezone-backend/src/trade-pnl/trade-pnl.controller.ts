@@ -37,10 +37,17 @@ export class TradePnLController {
   }
 
   @Get()
-  findAll(@Request() req, @Query('days') days?: string) {
+  findAll(
+    @Request() req,
+    @Query('days') days?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
     const userId = req.user.userId;
     const daysNum = days ? parseInt(days) : undefined;
-    return this.tradePnLService.findAll(userId, daysNum);
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 10;
+    return this.tradePnLService.findAllPaginated(userId, daysNum, pageNum, limitNum);
   }
 
   @Get('statistics')

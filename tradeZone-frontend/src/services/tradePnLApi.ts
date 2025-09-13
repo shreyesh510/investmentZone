@@ -17,9 +17,42 @@ export interface TradePnLDto {
   updatedAt: string;
 }
 
+export interface TradePnLPaginatedResponse {
+  data: TradePnLDto[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  statistics: {
+    totalProfit: number;
+    totalLoss: number;
+    netPnL: number;
+    totalTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    winRate: string;
+    averageDailyPnL: string;
+    daysTraded: number;
+    period: string;
+  };
+}
+
 export const tradePnLApi = {
   list: async (days?: number): Promise<TradePnLDto[]> => {
     const url = `/trade-pnl${days ? `?days=${days}` : ''}`;
+    const res = await getAxios.get(url);
+    return res.data;
+  },
+
+  listPaginated: async (
+    days?: number,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<TradePnLPaginatedResponse> => {
+    let url = `/trade-pnl?page=${page}&limit=${limit}`;
+    if (days) url += `&days=${days}`;
     const res = await getAxios.get(url);
     return res.data;
   },

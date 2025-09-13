@@ -5,12 +5,13 @@ import { useSettings } from '../../../contexts/settingsContext';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../../hooks/usePermissions';
 import type { RootState, AppDispatch } from '../../../redux/store';
-import { 
-  fetchTradePnL, 
-  createTradePnL, 
-  updateTradePnL, 
+import {
+  fetchTradePnL,
+  fetchTradePnLPaginated,
+  createTradePnL,
+  updateTradePnL,
   deleteTradePnL,
-  fetchTradePnLStatistics 
+  fetchTradePnLStatistics
 } from '../../../redux/thunks/tradePnL/tradePnLThunks';
 import { clearError } from '../../../redux/slices/tradePnLSlice';
 import AddTradePnLModal from './components/addTradePnLModal';
@@ -39,8 +40,12 @@ const TradePnL = memo(function TradePnL() {
     dataFilter: '7' // days for data filtering - default 7 days
   });
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(10);
+
   // Redux state
-  const { items, statistics, loading, creating, updating, deleting, error } = useSelector(
+  const { items, statistics, pagination, loading, creating, updating, deleting, error } = useSelector(
     (state: RootState) => state.tradePnL
   );
 
@@ -56,20 +61,24 @@ const TradePnL = memo(function TradePnL() {
 
   // Fetch data on mount and when filters change
   useEffect(() => {
-    dispatch(fetchTradePnL(parseInt(filters.dataFilter)));
-    dispatch(fetchTradePnLStatistics(parseInt(filters.dataFilter))); // Use same filter for statistics
-  }, [dispatch, filters]);
+    const days = parseInt(filters.dataFilter);
+    dispatch(fetchTradePnLPaginated({
+      days,
+      page: currentPage,
+      limit: itemsPerPage
+    }));
+  }, [dispatch, filters, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [filters.dataFilter]);
 
 
   // Handler functions
   const handleAddNew = () => {
-    const today = new Date().toISOString().split('T')[0];
-    // Check if today's record already exists
-    const todayExists = items.some(item => item.date === today);
-    if (todayExists) {
-      toast.warning('Today\'s P&L record already exists. You can edit it instead.');
-      return;
-    }
     setShowAddModal(true);
   };
 
@@ -408,6 +417,65 @@ const TradePnL = memo(function TradePnL() {
                 </tfoot>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className={`flex justify-between items-center mt-6 p-4 rounded-lg border ${
+                isDarkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-200/50'
+              }`}>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} records
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isDarkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:bg-gray-800'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:bg-gray-100'
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    const pageNumber = Math.max(1, Math.min(pagination.totalPages - 4, currentPage - 2)) + i;
+                    if (pageNumber > pagination.totalPages) return null;
+
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                          currentPage === pageNumber
+                            ? 'bg-blue-500 text-white'
+                            : isDarkMode
+                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+                    disabled={currentPage === pagination.totalPages}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isDarkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:bg-gray-800'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:bg-gray-100'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
