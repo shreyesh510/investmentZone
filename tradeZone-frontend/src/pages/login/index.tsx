@@ -6,8 +6,11 @@ import type { AppDispatch, RootState } from '../../redux/store';
 import ConnectionTest from '../../components/ConnectionTest';
 import Input from '../../components/input';
 import Button from '../../components/button';
+import { usePageTitle, PAGE_TITLES } from '../../hooks/usePageTitle';
 
 const Login: React.FC = () => {
+  usePageTitle(PAGE_TITLES.LOGIN);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

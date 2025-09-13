@@ -7,6 +7,7 @@ import Header from '../../../layouts/Header';
 import Sidebar from '../../../layouts/sidebar';
 import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { usePageTitle, PAGE_TITLES } from '../../../hooks/usePageTitle';
 import type { RootState, AppDispatch } from '../../../redux/store';
 import { fetchPositions, createPosition, updatePosition } from '../../../redux/thunks/positions/positionsThunks';
 import { clearError } from '../../../redux/slices/positionsSlice';
@@ -36,6 +37,8 @@ interface PositionForm {
 }
 
 const Positions = memo(function Positions() {
+  usePageTitle(PAGE_TITLES.POSITIONS);
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSettings();

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#3B82F6" opacity="0.1"/>
+
+  <!-- Main Chart Bars (Investment Growth) -->
+  <rect x="120" y="300" width="35" height="100" fill="#3B82F6" rx="4"/>
+  <rect x="170" y="260" width="35" height="140" fill="#1E40AF" rx="4"/>
+  <rect x="220" y="220" width="35" height="180" fill="#3B82F6" rx="4"/>
+  <rect x="270" y="180" width="35" height="220" fill="#1E40AF" rx="4"/>
+  <rect x="320" y="140" width="35" height="260" fill="#3B82F6" rx="4"/>
+
+  <!-- Upward Trend Arrow -->
+  <path d="M380 120 L420 160 L410 160 L410 200 L390 200 L390 160 L380 160 Z" fill="#3B82F6"/>
+
+  <!-- Investment Symbol (Circular Arrow) -->
+  <circle cx="256" cy="180" r="50" stroke="#1E40AF" stroke-width="8" fill="none" opacity="0.7"/>
+  <path d="M295 150 L315 170 L295 190" stroke="#1E40AF" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+  <!-- Company Initials "IZ" -->
+  <text x="230" y="360" font-family="Arial, sans-serif" font-size="60" font-weight="bold" text-anchor="middle" fill="#1E40AF">I</text>
+  <text x="280" y="360" font-family="Arial, sans-serif" font-size="60" font-weight="bold" text-anchor="middle" fill="#3B82F6">Z</text>
+
+  <!-- Dollar Sign -->
+  <text x="256" y="100" font-family="Arial, sans-serif" font-size="50" font-weight="bold" text-anchor="middle" fill="#059669">$</text>
+</svg>

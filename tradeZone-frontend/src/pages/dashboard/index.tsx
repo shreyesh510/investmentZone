@@ -3,6 +3,7 @@ import LiveChart from '../../components/chart/liveChart';
 import Header from '../../layouts/Header';
 import Chat from './components/Chat';
 import Sidebar from '../../layouts/sidebar';
+import { usePageTitle, PAGE_TITLES } from '../../hooks/usePageTitle';
 
 interface OnlineUser {
   userId: string;
@@ -11,6 +12,8 @@ interface OnlineUser {
 }
 
 const Dashboard = memo(function Dashboard() {
+  usePageTitle(PAGE_TITLES.DASHBOARD);
+
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
