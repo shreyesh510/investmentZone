@@ -8,7 +8,7 @@ import { ToastProvider } from './contexts/toastContext';
 import { ReactToastifyProvider } from './contexts/ReactToastifyContext';
 import { SocketProvider } from './contexts/SocketContext';
 import ToastContainer from './components/toast/toastContainer';
-import { createAppRoutes } from './routes/appRoutes';
+import { createAppRoutes } from './routes/AppRoutes';
 import './index.css';
 
 function App() {
