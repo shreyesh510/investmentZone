@@ -45,7 +45,7 @@ const tradePnLSlice = createSlice({
       })
       .addCase(fetchTradePnL.fulfilled, (state, action: PayloadAction<TradePnLDto[]>) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchTradePnL.rejected, (state, action) => {
         state.loading = false;
@@ -98,9 +98,9 @@ const tradePnLSlice = createSlice({
       })
       .addCase(fetchTradePnLPaginated.fulfilled, (state, action: PayloadAction<TradePnLPaginatedResponse>) => {
         state.loading = false;
-        state.items = action.payload.data;
-        state.statistics = action.payload.statistics;
-        state.pagination = action.payload.pagination;
+        state.items = Array.isArray(action.payload?.data) ? action.payload.data : [];
+        state.statistics = action.payload?.statistics || null;
+        state.pagination = action.payload?.pagination || null;
       })
       .addCase(fetchTradePnLPaginated.rejected, (state, action) => {
         state.loading = false;

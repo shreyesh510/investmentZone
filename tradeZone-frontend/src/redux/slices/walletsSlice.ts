@@ -32,7 +32,7 @@ const walletsSlice = createSlice({
       })
       .addCase(fetchWallets.fulfilled, (state, action: PayloadAction<WalletDto[]>) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchWallets.rejected, (state, action) => {
         state.loading = false;
@@ -69,7 +69,7 @@ const walletsSlice = createSlice({
       })
       .addCase(fetchWalletHistory.fulfilled, (state, action: PayloadAction<WalletHistoryItem[]>) => {
         state.historyLoading = false;
-        state.history = action.payload;
+        state.history = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchWalletHistory.rejected, (state) => {
         state.historyLoading = false;

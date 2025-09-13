@@ -28,7 +28,7 @@ const withdrawalsSlice = createSlice({
       })
       .addCase(fetchWithdrawals.fulfilled, (state, action: PayloadAction<WithdrawalDto[]>) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchWithdrawals.rejected, (state, action) => {
         state.loading = false;

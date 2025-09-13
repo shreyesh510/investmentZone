@@ -28,7 +28,7 @@ const depositsSlice = createSlice({
       })
       .addCase(fetchDeposits.fulfilled, (state, action: PayloadAction<DepositDto[]>) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchDeposits.rejected, (state, action) => {
         state.loading = false;

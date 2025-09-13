@@ -74,36 +74,36 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   // Create unified data object for component consumption
   const dashboardData = dashboardDataByTimeframe ? {
     wallets: {
-      dematWallet: dashboardDataByTimeframe.wallets.summary?.dematWallet || { balance: 0, currency: 'USD', count: 0 },
-      bankWallet: dashboardDataByTimeframe.wallets.summary?.bankWallet || { balance: 0, currency: 'INR', count: 0 },
-      recentActivity: dashboardDataByTimeframe.wallets.recentActivity || []
+      dematWallet: dashboardDataByTimeframe?.wallets?.summary?.dematWallet || { balance: 0, currency: 'USD', count: 0 },
+      bankWallet: dashboardDataByTimeframe?.wallets?.summary?.bankWallet || { balance: 0, currency: 'INR', count: 0 },
+      recentActivity: Array.isArray(dashboardDataByTimeframe?.wallets?.recentActivity) ? dashboardDataByTimeframe.wallets.recentActivity : []
     },
 
     positions: {
-      totalInvested: dashboardDataByTimeframe.positions.summary?.totalInvested || 0,
-      totalPnL: dashboardDataByTimeframe.positions.summary?.totalPnL || 0
+      totalInvested: dashboardDataByTimeframe?.positions?.summary?.totalInvested || 0,
+      totalPnL: dashboardDataByTimeframe?.positions?.summary?.totalPnL || 0
     },
 
     tradePnL: {
-      total: dashboardDataByTimeframe.tradePnL.total || { netPnL: 0, profit: 0, loss: 0, trades: 0 },
-      statistics: dashboardDataByTimeframe.tradePnL.statistics || {
+      total: dashboardDataByTimeframe?.tradePnL?.total || { netPnL: 0, profit: 0, loss: 0, trades: 0 },
+      statistics: dashboardDataByTimeframe?.tradePnL?.statistics || {
         netPnL: 0,
         totalTrades: 0,
         winRate: 0,
         averageDailyPnL: 0
       },
-      chartData: dashboardDataByTimeframe.tradePnL.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
+      chartData: dashboardDataByTimeframe?.tradePnL?.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
     },
 
     transactions: {
       deposits: {
-        total: dashboardDataByTimeframe.transactions.deposits?.total || 0,
-        pending: dashboardDataByTimeframe.transactions.deposits?.pending || 0,
-        completed: dashboardDataByTimeframe.transactions.deposits?.completed || 0,
-        list: dashboardDataByTimeframe.transactions.deposits?.recentActivity || []
+        total: dashboardDataByTimeframe?.transactions?.deposits?.total || 0,
+        pending: dashboardDataByTimeframe?.transactions?.deposits?.pending || 0,
+        completed: dashboardDataByTimeframe?.transactions?.deposits?.completed || 0,
+        list: Array.isArray(dashboardDataByTimeframe?.transactions?.deposits?.recentActivity) ? dashboardDataByTimeframe.transactions.deposits.recentActivity : []
       },
       withdrawals: {
-        chartData: dashboardDataByTimeframe.transactions.withdrawals?.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
+        chartData: dashboardDataByTimeframe?.transactions?.withdrawals?.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
       }
     }
   } : {
@@ -309,7 +309,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             </div>
           </div>
           <p className="text-3xl font-bold text-transparent bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text">
-            {formatCurrency(dashboardData.wallets.dematWallet.balance, dashboardData.wallets.dematWallet.currency)}
+            {formatCurrency(dashboardData?.wallets?.dematWallet?.balance || 0, dashboardData?.wallets?.dematWallet?.currency || 'USD')}
           </p>
           <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Available balance
@@ -333,7 +333,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             </div>
           </div>
           <p className="text-3xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text">
-            {formatCurrency(dashboardData.positions.totalInvested)}
+            {formatCurrency(dashboardData?.positions?.totalInvested || 0)}
           </p>
         </div>
 
@@ -348,21 +348,21 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
               Total Returns
             </h3>
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${
-              dashboardData.positions.totalPnL >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
+              (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
             } flex items-center justify-center`}>
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d={dashboardData.positions.totalPnL >= 0 ? "M7 11l5-5m0 0l5 5m-5-5v12" : "M17 13l-5 5m0 0l-5-5m5 5V6"} />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d={(dashboardData?.positions?.totalPnL || 0) >= 0 ? "M7 11l5-5m0 0l5 5m-5-5v12" : "M17 13l-5 5m0 0l-5-5m5 5V6"} />
               </svg>
             </div>
           </div>
           <p className={`text-3xl font-bold ${
-            dashboardData.positions.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'
+            (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {formatCurrency(dashboardData.positions.totalPnL)}
+            {formatCurrency(dashboardData?.positions?.totalPnL || 0)}
           </p>
           <p className={`text-sm mt-1 ${
-            dashboardData.positions.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'
+            (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
             Positions P&L
           </p>
@@ -379,7 +379,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
               Total P&L
             </h3>
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${
-              dashboardData.tradePnL.total.netPnL >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
+              (dashboardData?.tradePnL?.total?.netPnL || 0) >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
             } flex items-center justify-center`}>
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -387,12 +387,12 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             </div>
           </div>
           <p className={`text-3xl font-bold ${
-            dashboardData.tradePnL.total.netPnL >= 0 ? 'text-green-400' : 'text-red-400'
+            (dashboardData?.tradePnL?.total?.netPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {formatCurrency(dashboardData.tradePnL.total.netPnL)}
+            {formatCurrency(dashboardData?.tradePnL?.total?.netPnL || 0)}
           </p>
           <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {dashboardData.tradePnL.total.trades} total trades
+            {dashboardData?.tradePnL?.total?.trades || 0} total trades
           </p>
         </div>
       </div>
@@ -414,13 +414,13 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
               <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Demat Balance</p>
                 <p className="text-lg font-bold text-blue-400">
-                  {formatCurrency(dashboardData.wallets.dematWallet.balance, dashboardData.wallets.dematWallet.currency)}
+                  {formatCurrency(dashboardData?.wallets?.dematWallet?.balance || 0, dashboardData?.wallets?.dematWallet?.currency || 'USD')}
                 </p>
               </div>
               <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Bank Balance</p>
                 <p className="text-lg font-bold text-green-400">
-                  {formatCurrency(dashboardData.wallets.bankWallet.balance, dashboardData.wallets.bankWallet.currency)}
+                  {formatCurrency(dashboardData?.wallets?.bankWallet?.balance || 0, dashboardData?.wallets?.bankWallet?.currency || 'INR')}
                 </p>
               </div>
             </div>
@@ -430,12 +430,12 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                 }`}>
-                  {dashboardData.wallets.dematWallet.count} Demat Accounts
+                  {dashboardData?.wallets?.dematWallet?.count || 0} Demat Accounts
                 </span>
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
                 }`}>
-                  {dashboardData.wallets.bankWallet.count} Bank Accounts
+                  {dashboardData?.wallets?.bankWallet?.count || 0} Bank Accounts
                 </span>
               </div>
             </div>
@@ -445,7 +445,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <div>
             <h3 className="text-sm font-medium mb-3">Recent Wallet Activity</h3>
             <div className="space-y-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-              {dashboardData.wallets.recentActivity.slice(0, 4).map((activity) => (
+              {(dashboardData?.wallets?.recentActivity || []).slice(0, 4).map((activity) => (
                 <div key={activity.id} className={`p-3 rounded-lg border transition-all duration-200 hover:scale-102 ${
                   isDarkMode 
                     ? 'bg-gradient-to-r from-gray-800/60 to-gray-700/60 border-gray-600/50 hover:border-gray-500/70' 
@@ -554,13 +554,13 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
               <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Amount</p>
                 <p className="text-lg font-bold text-blue-400">
-                  {formatCurrency(dashboardData.transactions.deposits.total, 'INR')}
+                  {formatCurrency(dashboardData?.transactions?.deposits?.total || 0, 'INR')}
                 </p>
               </div>
               <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Count</p>
                 <p className="text-lg font-bold text-gray-300">
-                  {dashboardData.transactions.deposits.pending + dashboardData.transactions.deposits.completed}
+                  {(dashboardData?.transactions?.deposits?.pending || 0) + (dashboardData?.transactions?.deposits?.completed || 0)}
                 </p>
               </div>
             </div>
@@ -570,12 +570,12 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
                 }`}>
-                  {dashboardData.transactions.deposits.completed} Completed
+                  {dashboardData?.transactions?.deposits?.completed || 0} Completed
                 </span>
                 <span className={`text-xs px-2 py-1 rounded-full ${
                   isDarkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-600'
                 }`}>
-                  {dashboardData.transactions.deposits.pending} Pending
+                  {dashboardData?.transactions?.deposits?.pending || 0} Pending
                 </span>
               </div>
             </div>
@@ -585,7 +585,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <div>
             <h3 className="text-sm font-medium mb-3">Recent Deposit Activity</h3>
             <div className="space-y-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-              {dashboardData.transactions.deposits.list.slice(0, 5).map((deposit) => (
+              {(dashboardData?.transactions?.deposits?.list || []).slice(0, 5).map((deposit) => (
                 <div key={deposit.id} className={`p-3 rounded-lg border transition-all duration-200 hover:scale-102 ${
                   isDarkMode 
                     ? 'bg-gradient-to-r from-gray-800/60 to-gray-700/60 border-gray-600/50 hover:border-gray-500/70' 
@@ -602,29 +602,29 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                       
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-xs mb-1 truncate">
-                          {deposit.method || 'Bank Transfer'}
+                          {deposit?.method || 'Bank Transfer'}
                         </p>
                         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {deposit.description}
+                          {deposit?.description || 'No description'}
                         </p>
                         <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                          {new Date(deposit.requestedAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
+                          {deposit?.requestedAt ? new Date(deposit.requestedAt).toLocaleDateString('en-US', {
+                            month: 'short',
                             day: 'numeric'
-                          })}
+                          }) : 'N/A'}
                         </p>
                       </div>
                     </div>
                     
                     <div className="flex flex-col items-end space-y-1">
                       <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                        deposit.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                        deposit?.status === 'completed' ? 'bg-green-500/20 text-green-400' :
                         'bg-yellow-500/20 text-yellow-400'
                       }`}>
-                        {deposit.status === 'completed' ? 'DONE' : 'PENDING'}
+                        {deposit?.status === 'completed' ? 'DONE' : 'PENDING'}
                       </span>
                       <span className="text-xs font-bold text-blue-400">
-                        +{formatCurrency(deposit.amount, 'INR')}
+                        +{formatCurrency(deposit?.amount || 0, 'INR')}
                       </span>
                     </div>
                   </div>
@@ -665,7 +665,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
               <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Trades</p>
               <p className="text-lg font-bold text-gray-300">
-                {dashboardData.tradePnL.statistics.totalTrades}
+                {dashboardData?.tradePnL?.statistics?.totalTrades || 0}
               </p>
             </div>
           </div>

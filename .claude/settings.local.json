@@ -10,7 +10,8 @@
       "Bash(npm run start:dev:*)",
       "Bash(taskkill:*)",
       "Bash(find:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
