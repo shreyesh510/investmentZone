@@ -35,8 +35,6 @@ const Positions = memo(function Positions() {
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   const [showImport, setShowImport] = useState<boolean>(false);
   // Close modal state
@@ -56,6 +54,7 @@ const Positions = memo(function Positions() {
     side: 'all' as 'all' | 'buy' | 'sell',
     account: 'longterm' as 'all' | 'main' | 'longterm',
     platform: 'Delta Exchange' as 'all' | 'Delta Exchange' | 'Groww',
+    status: 'open' as 'all' | 'open' | 'closed',
   });
   const [search, setSearch] = useState<string>('');
 
@@ -69,18 +68,11 @@ const Positions = memo(function Positions() {
     }
   }, [canAccessInvestment, navigate]);
 
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Fetch positions from API based on filters (server-side filtering)
   useEffect(() => {
     const f: any = {};
-    f.status = 'open';
+    if (filters.status !== 'all') f.status = filters.status;
     if (filters.side !== 'all') f.side = filters.side;
     if (filters.platform !== 'all') f.platform = filters.platform;
     if (filters.account !== 'all') f.account = filters.account;
@@ -107,7 +99,6 @@ const Positions = memo(function Positions() {
     return () => { mounted = false; clearInterval(id); };
   }, []);
 
-  const handleTabChange = (tab: MobileTab) => setActiveTab(tab);
   const isDarkMode = settings.theme === 'dark';
 
   // Amounts are already USD; display as-is
@@ -199,12 +190,10 @@ const Positions = memo(function Positions() {
   const openCloseModal = (position: PositionLike) => {
     if ('id' in position) {
       setSelectedForClose(position as Position);
-      setClosePnL('');
       setShowCloseModal(true);
     } else {
       toast.info('Open the symbol detail to close specific legs, or use Close All.');
       setSelectedForClose(null);
-      setClosePnL('');
       setShowCloseModal(true);
     }
   };
@@ -262,7 +251,7 @@ const Positions = memo(function Positions() {
   }, [uniquePositions, search]);
 
   const content = (
-    <div className={`flex-1 p-6 overflow-y-auto ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
+    <div className={`flex-1 p-4 md:p-6 overflow-y-auto ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
       {/* Error Display */}
       {error && (
         <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -274,17 +263,18 @@ const Positions = memo(function Positions() {
       )}
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Positions</h1>
-          <div className="flex space-x-3">
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className={`text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Positions</h1>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             {/* Import File Button */}
             <RoundedButton
               onClick={() => setShowImport(true)}
               variant="purple"
               isDarkMode={isDarkMode}
             >
-              Import File
+              <span className="hidden sm:inline">Import File</span>
+              <span className="sm:hidden">Import</span>
             </RoundedButton>
             {/* Add Position Button */}
             <RoundedButton
@@ -298,7 +288,8 @@ const Positions = memo(function Positions() {
                 </svg>
               }
             >
-              {showAddForm ? 'Cancel' : 'Add Position'}
+              <span className="hidden sm:inline">{showAddForm ? 'Cancel' : 'Add Position'}</span>
+              <span className="sm:hidden">{showAddForm ? 'Cancel' : 'Add'}</span>
             </RoundedButton>
           </div>
         </div>
@@ -306,128 +297,157 @@ const Positions = memo(function Positions() {
 
       {/* Filters */}
       <div
-        className={`p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
+        className={`p-4 md:p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
           isDarkMode ? 'bg-gray-800/30 border-gray-700/50 shadow-xl shadow-gray-900/20' : 'bg-white/60 border-white/20 shadow-xl shadow-gray-900/10'
         }`}
       >
-        <div className="flex flex-wrap gap-5 items-center">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-5 items-start sm:items-center">
           <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             Filters:
           </h3>
           
-          {/* Timeframe Filter */}
-          <div className="flex items-center space-x-3">
-            <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Timeframe:
+          {/* Status Filter */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <label className={`text-sm font-medium whitespace-nowrap ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Status:
             </label>
             <select
-              value={filters.timeframe}
-              onChange={(e) => handleFilterChange('timeframe', e.target.value)}
-              className={`px-4 py-2 rounded-lg text-sm border ${
-                isDarkMode 
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white' 
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className={`px-3 md:px-4 py-2 rounded-lg text-sm border w-full sm:w-auto ${
+                isDarkMode
+                  ? 'bg-gray-700/50 border-gray-600/50 text-white'
                   : 'bg-white/70 border-gray-300/50 text-gray-900'
               } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
             >
-              <option value="1D">1 Day</option>
-              <option value="7D">7 Days</option>
-              <option value="30D">30 Days</option>
-              <option value="90D">90 Days</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-
-          {/* Side Filter */}
-          <div className="flex items-center space-x-3">
-            <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Side:
-            </label>
-            <select
-              value={filters.side}
-              onChange={(e) => handleFilterChange('side', e.target.value)}
-              className={`px-4 py-2 rounded-lg text-sm border ${
-                isDarkMode 
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white' 
-                  : 'bg-white/70 border-gray-300/50 text-gray-900'
-              } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-            >
-              <option value="all">All</option>
-              <option value="buy">Buy</option>
-              <option value="sell">Sell</option>
-            </select>
-          </div>
-
-          {/* Platform Filter */}
-          <div className="flex items-center space-x-3">
-            <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Platform:
-            </label>
-            <select
-              value={filters.platform}
-              onChange={(e) => handleFilterChange('platform', e.target.value)}
-              className={`px-4 py-2 rounded-lg text-sm border ${
-                isDarkMode 
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white' 
-                  : 'bg-white/70 border-gray-300/50 text-gray-900'
-              } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-            >
-              <option value="Delta Exchange">Delta Exchange</option>
-              <option value="Groww">Groww</option>
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
               <option value="all">All</option>
             </select>
           </div>
 
-          {/* Account Filter */}
-          <div className="flex items-center space-x-3">
-            <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Account:
-            </label>
-            <select
-              value={filters.account}
-              onChange={(e) => handleFilterChange('account', e.target.value)}
-              className={`px-4 py-2 rounded-lg text-sm border ${
-                isDarkMode 
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white' 
-                  : 'bg-white/70 border-gray-300/50 text-gray-900'
-              } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-            >
-              <option value="all">All</option>
-              <option value="main">Main</option>
-              <option value="longterm">Longterm</option>
-            </select>
+          {/* Filter Controls Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
+            {/* Timeframe Filter */}
+            <div className="flex flex-col gap-1">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Timeframe:
+              </label>
+              <select
+                value={filters.timeframe}
+                onChange={(e) => handleFilterChange('timeframe', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+              >
+                <option value="1D">1 Day</option>
+                <option value="7D">7 Days</option>
+                <option value="30D">30 Days</option>
+                <option value="90D">90 Days</option>
+                <option value="all">All Time</option>
+              </select>
+            </div>
+
+            {/* Side Filter */}
+            <div className="flex flex-col gap-1">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Side:
+              </label>
+              <select
+                value={filters.side}
+                onChange={(e) => handleFilterChange('side', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+              >
+                <option value="all">All</option>
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+              </select>
+            </div>
+
+            {/* Platform Filter */}
+            <div className="flex flex-col gap-1">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Platform:
+              </label>
+              <select
+                value={filters.platform}
+                onChange={(e) => handleFilterChange('platform', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+              >
+                <option value="Delta Exchange">Delta Exchange</option>
+                <option value="Groww">Groww</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+
+            {/* Account Filter */}
+            <div className="flex flex-col gap-1">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Account:
+              </label>
+              <select
+                value={filters.account}
+                onChange={(e) => handleFilterChange('account', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                } focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+              >
+                <option value="all">All</option>
+                <option value="main">Main</option>
+                <option value="longterm">Longterm</option>
+              </select>
+            </div>
           </div>
 
-          {/* Search by Name */}
-          <div className="flex items-center space-x-3">
-            <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Search:
-            </label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name"
-              className={`px-4 py-2 rounded-lg text-sm border ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500'}`}
-            />
-          </div>
+          {/* Search and Reset Controls */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* Search by Name */}
+            <div className="flex flex-col gap-1">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Search:
+              </label>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name"
+                className={`px-3 py-2 rounded-lg text-sm border ${isDarkMode ? 'bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400' : 'bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500'}`}
+              />
+            </div>
 
-          {/* Clear Filters Button */}
-          <button
-            onClick={() => { setFilters({ timeframe: 'all', side: 'all', account: 'longterm', platform: 'Delta Exchange' }); setSearch(''); }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDarkMode 
-                ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50' 
-                : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
-            }`}
-          >
-            Reset
-          </button>
+            {/* Clear Filters Button */}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium opacity-0">Reset:</label>
+              <button
+                onClick={() => { setFilters({ timeframe: 'all', side: 'all', account: 'longterm', platform: 'Delta Exchange', status: 'open' }); setSearch(''); }}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+                    : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
+                }`}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Column - 75% - Current Functionality */}
+      {/* Main Content - Mobile-Responsive Layout */}
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
+        {/* Left Column - Main Content */}
         <div className="flex-1 lg:w-3/4">
 
       {/* Investment Summary */}
@@ -503,7 +523,7 @@ const Positions = memo(function Positions() {
           }`}
         >
           <h2 className="text-lg font-semibold mb-4">Add New Position</h2>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6">
             {/* Platform Selection */}
             <Select
               value={positionForm.platform}
@@ -576,7 +596,7 @@ const Positions = memo(function Positions() {
             />
 
             {/* Submit */}
-            <div className="md:col-span-2 lg:col-span-6 flex gap-4">
+            <div className="sm:col-span-2 lg:col-span-6 flex flex-col sm:flex-row gap-4">
               <button
                 type="submit"
                 disabled={createLoading}
@@ -608,7 +628,7 @@ const Positions = memo(function Positions() {
 
       {/* Positions Grid */}
       {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
           {filteredPositions.map((position: any) => {
             return (
               <div
@@ -622,9 +642,20 @@ const Positions = memo(function Positions() {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {position.symbol}
-                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {position.symbol}
+                      </h3>
+                      {('status' in position && position.status === 'closed') && (
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          isDarkMode
+                            ? 'bg-gray-700 text-gray-400'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          CLOSED
+                        </span>
+                      )}
+                    </div>
                     {'platform' in position && (
                       <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         {(position as Position).platform}
@@ -633,7 +664,7 @@ const Positions = memo(function Positions() {
                   </div>
 
                   <div className={`text-sm font-medium px-2 py-1 rounded ${
-                    position.side === 'buy' 
+                    position.side === 'buy'
                       ? isDarkMode ? 'text-green-400' : 'text-green-600'
                       : isDarkMode ? 'text-red-400' : 'text-red-600'
                   }`}>
@@ -680,40 +711,55 @@ const Positions = memo(function Positions() {
                   )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className={`flex space-x-2 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if ('id' in position) {
-                        handleModifyPosition(position as Position);
-                      } else {
-                        toast.info('Cannot modify aggregated positions. Please view individual positions.');
-                      }
-                    }}
-                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
-                      isDarkMode 
-                        ? 'border border-gray-600 text-gray-300 hover:bg-gray-700' 
-                        : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    Modify
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openCloseModal(position);
-                    }}
-                    disabled={updateLoading}
-                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors disabled:opacity-50 ${
-                      isDarkMode 
-                        ? 'border border-gray-600 text-gray-300 hover:bg-gray-700' 
-                        : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {updateLoading ? 'Closing...' : 'Close'}
-                  </button>
-                </div>
+                {/* Action Buttons - Only show for open positions */}
+                {('status' in position && position.status === 'open') && (
+                  <div className={`flex space-x-2 pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if ('id' in position) {
+                          handleModifyPosition(position as Position);
+                        } else {
+                          toast.info('Cannot modify aggregated positions. Please view individual positions.');
+                        }
+                      }}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors ${
+                        isDarkMode
+                          ? 'border border-gray-600 text-gray-300 hover:bg-gray-700'
+                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      Modify
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openCloseModal(position);
+                      }}
+                      disabled={updateLoading}
+                      className={`flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors disabled:opacity-50 ${
+                        isDarkMode
+                          ? 'border border-gray-600 text-gray-300 hover:bg-gray-700'
+                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {updateLoading ? 'Closing...' : 'Close'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Status indicator for closed positions */}
+                {('status' in position && position.status === 'closed') && (
+                  <div className={`pt-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <div className={`w-full py-2 px-3 text-sm font-medium rounded-md text-center ${
+                      isDarkMode
+                        ? 'bg-gray-700/50 text-gray-400'
+                        : 'bg-gray-100/50 text-gray-500'
+                    }`}>
+                      Position Closed
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -721,19 +767,19 @@ const Positions = memo(function Positions() {
       )}
         </div>
 
-        {/* Right Column - 25% - Recent Activity */}
-        <div className="w-full lg:w-1/4">
+        {/* Right Column - Recent Activity */}
+        <div className="w-full lg:w-1/4 order-first lg:order-last">
           <div
-            className={`p-6 rounded-2xl backdrop-blur-lg border ${
+            className={`p-4 md:p-6 rounded-2xl backdrop-blur-lg border ${
               isDarkMode ? 'bg-gray-800/30 border-gray-700/50 shadow-xl shadow-gray-900/20' : 'bg-white/60 border-white/20 shadow-xl shadow-gray-900/10'
             }`}
           >
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3 className={`text-base md:text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Recent Activity
             </h3>
-            
-            {/* Activity List - Scrollable with full screen height */}
-            <div className="space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+
+            {/* Activity List - Mobile responsive height */}
+            <div className="space-y-3 max-h-[300px] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
               {activityLoading && (
                 <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-100/50'}`}>
                   <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Loading activity…</p>
@@ -836,22 +882,8 @@ const Positions = memo(function Positions() {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div
-        className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col fixed inset-0 overflow-hidden`}
-        style={{ height: '100svh', minHeight: '100vh', maxHeight: '100vh', width: '100vw', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, paddingBottom: '0px', margin: '0px' }}
-      >
-        <div className="flex-1 overflow-hidden" style={{ height: '100vh' }}>
-          {content}
-        </div>
-        <FloatingButton activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
-    );
-  }
-
   return (
-    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} overflow-y-auto`}>
       {content}
 
       {/* Import Modal */}
@@ -861,7 +893,8 @@ const Positions = memo(function Positions() {
           isDarkMode={isDarkMode}
           onClose={() => setShowImport(false)}
           onImported={async () => {
-            const f: any = { status: 'open', timeframe: filters.timeframe };
+            const f: any = { timeframe: filters.timeframe };
+            if (filters.status !== 'all') f.status = filters.status;
             if (filters.side !== 'all') f.side = filters.side;
             if (filters.platform !== 'all') f.platform = filters.platform;
             if (filters.account !== 'all') f.account = filters.account;

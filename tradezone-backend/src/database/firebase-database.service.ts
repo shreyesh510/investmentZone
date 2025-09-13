@@ -1202,6 +1202,7 @@ export class FirebaseDatabaseService {
       try {
         const fields = [
           'name',
+          'type',
           'platform',
           'balance',
           'currency',

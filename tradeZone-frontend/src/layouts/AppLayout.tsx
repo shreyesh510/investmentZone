@@ -17,6 +17,10 @@ const AppLayout = ({ children, onlineUsers = [] }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start collapsed
   const [isMobile, setIsMobile] = useState(false);
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   // Check if mobile
   useEffect(() => {
     const checkMobile = () => {
@@ -29,9 +33,15 @@ const AppLayout = ({ children, onlineUsers = [] }: AppLayoutProps) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  // Listen for custom sidebar toggle events from child components
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      toggleSidebar();
+    };
+
+    window.addEventListener('toggleSidebar', handleToggleSidebar);
+    return () => window.removeEventListener('toggleSidebar', handleToggleSidebar);
+  }, [toggleSidebar]);
 
   const isDarkMode = settings.theme === 'dark';
 

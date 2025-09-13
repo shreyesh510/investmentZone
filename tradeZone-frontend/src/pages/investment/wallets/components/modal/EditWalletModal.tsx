@@ -85,15 +85,15 @@ const EditWalletModal: React.FC<EditWalletModalProps> = ({ open, initial, onSave
     if (type !== initial.type) patch.type = type;
     const bal = parseFloat(balance);
     if (!isNaN(bal) && bal !== initial.balance) patch.balance = bal;
-    
+
     // Handle platform
     const finalPlatform = platform === 'Other' ? customPlatform.trim() : platform;
     if (finalPlatform !== (initial.platform || '')) patch.platform = finalPlatform;
-    
+
     // Handle currency
     const finalCurrency = currency === 'Other' ? customCurrency.trim() : currency;
     if (finalCurrency !== (initial.currency || '')) patch.currency = finalCurrency;
-    
+
     if (address.trim() !== (initial.address || '')) patch.address = address.trim();
     if (notes.trim() !== (initial.notes || '')) patch.notes = notes.trim();
     onSave(patch);

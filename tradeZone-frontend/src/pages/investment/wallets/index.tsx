@@ -694,15 +694,16 @@ const WalletsPage = memo(function WalletsPage() {
               try {
                 await dispatch(updateWallet({
                   id: editId,
-                  patch: {
-                    balance: patch.amount,
-                    platform: patch.method,
-                    notes: patch.description
-                  }
+                  patch: patch
                 })).unwrap();
+
+                // Refresh wallet list to ensure UI shows latest data
+                await dispatch(fetchWallets());
+
                 toast.success('Wallet updated successfully');
                 setEditId(null);
               } catch (error) {
+                console.error('Update failed:', error);
                 toast.error('Failed to update wallet');
               }
             }
