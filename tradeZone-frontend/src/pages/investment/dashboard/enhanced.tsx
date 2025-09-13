@@ -25,8 +25,6 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
   
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
 
   // Redux state
@@ -57,9 +55,6 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
   }, [dispatch, selectedTimeFilter]);
 
 
-  const handleTabChange = (tab: MobileTab) => {
-    setActiveTab(tab);
-  };
 
   const isDarkMode = settings.theme === 'dark';
 
@@ -656,32 +651,6 @@ const EnhancedDashboard = memo(function EnhancedDashboard() {
       </div>
     </div>
   );
-
-  if (isMobile) {
-    return (
-      <div 
-        className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col fixed inset-0 overflow-hidden`}
-        style={{ 
-          height: '100svh',
-          minHeight: '100vh',
-          maxHeight: '100vh',
-          width: '100vw',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingBottom: '0px',
-          margin: '0px'
-        }}
-      >
-        <div className="flex-1 overflow-hidden" style={{ height: '100vh' }}>
-          {content}
-        </div>
-        <FloatingButton activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
-    );
-  }
 
   return (
     <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>

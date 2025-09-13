@@ -57,6 +57,9 @@ const walletsSlice = createSlice({
           state.items[idx] = { ...state.items[idx], ...(action.payload.patch as any) } as any;
         }
       })
+      .addCase(updateWallet.rejected, (state, action) => {
+        state.error = (action.payload as string) ?? 'Failed to update wallet';
+      })
       .addCase(deleteWallet.fulfilled, (state, action) => {
         if (!action.payload.success) return;
         state.items = state.items.filter((w) => w.id !== action.payload.id);

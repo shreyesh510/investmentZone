@@ -25,8 +25,6 @@ const TradePnL = memo(function TradePnL() {
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   
   // Modal states
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -55,13 +53,6 @@ const TradePnL = memo(function TradePnL() {
     }
   }, [canAccessInvestment, navigate]);
 
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Fetch data on mount and when filters change
   useEffect(() => {
@@ -69,7 +60,6 @@ const TradePnL = memo(function TradePnL() {
     dispatch(fetchTradePnLStatistics(parseInt(filters.dataFilter))); // Use same filter for statistics
   }, [dispatch, filters]);
 
-  const handleTabChange = (tab: MobileTab) => setActiveTab(tab);
 
   // Handler functions
   const handleAddNew = () => {
@@ -424,17 +414,8 @@ const TradePnL = memo(function TradePnL() {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col fixed inset-0 overflow-hidden`}>
-        <div className="flex-1 overflow-hidden">{content}</div>
-        <FloatingButton activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
-    );
-  }
-
   return (
-    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} overflow-y-auto`}>
       {content}
 
       {/* Add Modal */}

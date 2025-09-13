@@ -56,7 +56,6 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   const { canAccessInvestment } = usePermissions();
   
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
-  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   // Redux state - using both old and new dashboard for transition
   const { data: oldDashboardData, loading: oldLoading, error: oldError } = useSelector((state: RootState) => state.dashboard);
@@ -1187,31 +1186,6 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <div 
-        className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col fixed inset-0 overflow-hidden`}
-        style={{ 
-          height: '100svh',
-          minHeight: '100vh',
-          maxHeight: '100vh',
-          width: '100vw',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingBottom: '0px',
-          margin: '0px'
-        }}
-      >
-        <div className="flex-1 overflow-hidden" style={{ height: '100vh' }}>
-          {content}
-        </div>
-        <FloatingButton activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
-    );
-  }
 
   return (
     <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col overflow-hidden`}>
