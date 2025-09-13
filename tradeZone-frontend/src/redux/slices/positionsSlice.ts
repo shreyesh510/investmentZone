@@ -137,7 +137,7 @@ const positionsSlice = createSlice({
       })
   .addCase(fetchPositions.fulfilled, (state, action: PayloadAction<PositionLike[]>) => {
         state.loading = false;
-        state.positions = action.payload;
+        state.positions = Array.isArray(action.payload) ? action.payload : [];
         state.error = null;
         state.lastUpdated = Date.now();
       })
@@ -263,7 +263,7 @@ const positionsSlice = createSlice({
       })
       .addCase(fetchOpenPositions.fulfilled, (state, action: PayloadAction<Position[]>) => {
         state.openLoading = false;
-        state.openPositions = action.payload;
+        state.openPositions = Array.isArray(action.payload) ? action.payload : [];
         state.error = null;
       })
       .addCase(fetchOpenPositions.rejected, (state, action) => {
@@ -278,7 +278,7 @@ const positionsSlice = createSlice({
       })
       .addCase(fetchClosedPositions.fulfilled, (state, action: PayloadAction<Position[]>) => {
         state.closedLoading = false;
-        state.closedPositions = action.payload;
+        state.closedPositions = Array.isArray(action.payload) ? action.payload : [];
         state.error = null;
       })
       .addCase(fetchClosedPositions.rejected, (state, action) => {
@@ -293,7 +293,11 @@ const positionsSlice = createSlice({
       })
       .addCase(fetchDashboardPositions.fulfilled, (state, action: PayloadAction<DashboardPositionsData>) => {
         state.dashboardLoading = false;
-        state.dashboardData = action.payload;
+        state.dashboardData = action.payload || {
+          summary: { totalPositions: 0, totalInvested: 0, totalPnL: 0 },
+          chartData: { daily: [], weekly: [], monthly: [], yearly: [] },
+          performance: { dayChange: 0, percentChange: 0 }
+        };
         state.error = null;
       })
       .addCase(fetchDashboardPositions.rejected, (state, action) => {

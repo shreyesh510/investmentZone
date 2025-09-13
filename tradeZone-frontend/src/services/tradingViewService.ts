@@ -60,47 +60,8 @@ export interface CryptoInfo {
 }
 
 class TradingViewService {
-  private baseURL = 'https://api.coingecko.com/api/v3';
   private tvURL = 'https://api.binance.com/api/v3'; // Alternative data source
   
-  /**
-   * Converts TradingView symbol to CoinGecko ID
-   */
-  private symbolToCoinGeckoId(symbol: string): string {
-    const symbolMap: Record<string, string> = {
-      'DOGEUSD': 'dogecoin',
-      'DOGE': 'dogecoin',
-      'BTCUSD': 'bitcoin',
-      'BTC': 'bitcoin',
-      'ETHUSD': 'ethereum', 
-      'ETH': 'ethereum',
-      'ADAUSD': 'cardano',
-      'ADA': 'cardano',
-      'SOLUSD': 'solana',
-      'SOL': 'solana',
-      'MATICUSD': 'matic-network',
-      'MATIC': 'matic-network',
-      'DOTUSD': 'polkadot',
-      'DOT': 'polkadot',
-      'AVAXUSD': 'avalanche-2',
-      'AVAX': 'avalanche-2',
-  'LTCUSD': 'litecoin',
-  'LTC': 'litecoin',
-  'FLOKIUSD': 'floki',
-  'FLOKI': 'floki',
-  'XRPUSD': 'ripple',
-  'XRP': 'ripple',
-  'BNBUSD': 'binancecoin',
-  'BNB': 'binancecoin',
-  'ALGOUSD': 'algorand',
-  'ALGO': 'algorand',
-  'SUIUSD': 'sui',
-  'SUI': 'sui',
-    };
-    
-    const cleanSymbol = symbol.replace('USD', '').toUpperCase();
-    return symbolMap[symbol] || symbolMap[cleanSymbol] || symbol.toLowerCase();
-  }
 
   /**
    * Converts TradingView symbol to Binance format
@@ -148,47 +109,41 @@ class TradingViewService {
   }
 
   /**
-   * Fetches current crypto info from CoinGecko
+   * Fetches current crypto info with static data
    */
   async getCryptoInfo(symbol: string): Promise<CryptoInfo | null> {
-    try {
-      const coinId = this.symbolToCoinGeckoId(symbol);
-      // Prefer simple/price to avoid 404s on unknown ids like ltcusd
-      const simpleUrl = `${this.baseURL}/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=usd&include_24hr_change=true`;
-      const response = await fetch(simpleUrl);
+    // Static data - replace with your preferred data source
+    const staticData: Record<string, any> = {
+      BTCUSD: { price: 110000, change: 1.2 },
+      ETHUSD: { price: 4200, change: -0.8 },
+      DOGEUSD: { price: 0.08, change: -2.14 },
+      LTCUSD: { price: 116.91, change: 1.2 },
+      SOLUSD: { price: 200, change: -0.13 },
+      BNBUSD: { price: 600, change: -0.13 },
+      AVAXUSD: { price: 24, change: 5.8 },
+      XRPUSD: { price: 0.6, change: 0.5 },
+    };
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch simple price: ${response.status}`);
-      }
+    const data = staticData[symbol.toUpperCase()];
+    if (!data) return null;
 
-      const data = await response.json();
-      const entry = data?.[coinId];
-      if (!entry) {
-        throw new Error(`CoinGecko simple price missing entry for ${coinId}`);
-      }
-
-      // Map minimal fields; other metrics default to 0
-      return {
-        id: coinId,
-        symbol: symbol.toUpperCase(),
-        name: coinId,
-        current_price: Number(entry.usd) || 0,
-        price_change_percentage_24h: Number(entry.usd_24h_change ?? 0),
-        total_volume: 0,
-        market_cap: 0,
-        market_cap_rank: 0,
-        circulating_supply: 0,
-        max_supply: 0,
-        ath: 0,
-        ath_change_percentage: 0,
-        atl: 0,
-        atl_change_percentage: 0,
-        last_updated: new Date().toISOString(),
-      };
-    } catch (error) {
-      console.error(`❌ Error fetching crypto info for ${symbol}:`, error);
-      return null;
-    }
+    return {
+      id: symbol.toLowerCase(),
+      symbol: symbol.toUpperCase(),
+      name: symbol,
+      current_price: data.price,
+      price_change_percentage_24h: data.change,
+      total_volume: 0,
+      market_cap: 0,
+      market_cap_rank: 0,
+      circulating_supply: 0,
+      max_supply: 0,
+      ath: 0,
+      ath_change_percentage: 0,
+      atl: 0,
+      atl_change_percentage: 0,
+      last_updated: new Date().toISOString(),
+    };
   }
 
   /**

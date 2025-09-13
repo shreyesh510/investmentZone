@@ -1,21 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-
-// Map our symbols to CoinGecko IDs
-const COINGECKO_IDS: Record<string, string> = {
-  BTCUSD: 'bitcoin',
-  ETHUSD: 'ethereum',
-  SOLUSD: 'solana',
-  AVAXUSD: 'avalanche-2',
-  XRPUSD: 'ripple',
-  BNBUSD: 'binancecoin',
-  LTCUSD: 'litecoin',
-  DOGEUSD: 'dogecoin',
-  ADAUSD: 'cardano',
-  FLOKIUSD: 'floki',
-  ALGOUSD: 'algorand',
-  SUIUSD: 'sui',
-};
 
 // Lot size map: base units per lot for platform
 const LOT_SIZES: Record<string, number> = {
@@ -35,71 +18,32 @@ export class MarketDataService {
     return LOT_SIZES[symbol?.toUpperCase?.() ?? ''] ?? 0;
   }
 
-  mapToCoinId(symbol: string): string | undefined {
-    return COINGECKO_IDS[symbol?.toUpperCase?.() ?? ''];
-  }
-
   async getUsdPricesForSymbols(
     symbols: string[],
   ): Promise<Record<string, number>> {
-    const ids = Array.from(
-      new Set(
-        symbols.map((s) => this.mapToCoinId(s)).filter((x): x is string => !!x),
-      ),
-    );
+    // Static prices - replace with your preferred data source
+    const staticPrices: Record<string, number> = {
+      BTCUSD: 110000,
+      ETHUSD: 4200,
+      AVAXUSD: 24,
+      FLOKIUSD: 0.00009,
+      DOGEUSD: 0.08,
+      SOLUSD: 200,
+      ADAUSD: 0.5,
+      XRPUSD: 0.6,
+      BNBUSD: 600,
+      LTCUSD: 100,
+      ALGOUSD: 0.2,
+      SUIUSD: 2,
+    };
 
-    if (ids.length === 0) {
-      return {};
-    }
-
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(
-      ids.join(','),
-    )}&vs_currencies=usd`;
-
-    try {
-      const res = await axios.get(url, {
-        headers: { accept: 'application/json' },
-        timeout: 10000, // 10 second timeout
-      });
-
-      const data = res.data as Record<string, { usd?: number }>;
-
-      // Build map back to our symbol keys
-      const priceBySymbol: Record<string, number> = {};
-      for (const sym of symbols) {
-        const id = this.mapToCoinId(sym);
-        const price = id ? data[id]?.usd : undefined;
-        if (typeof price === 'number' && price > 0) {
-          priceBySymbol[sym.toUpperCase()] = price;
-        }
+    const priceBySymbol: Record<string, number> = {};
+    for (const sym of symbols) {
+      const price = staticPrices[sym.toUpperCase()];
+      if (typeof price === 'number' && price > 0) {
+        priceBySymbol[sym.toUpperCase()] = price;
       }
-      return priceBySymbol;
-    } catch (error) {
-      console.error('❌ MarketData: API request error:', error);
-      // Fallback to static prices if API fails
-      const fallbackPrices: Record<string, number> = {
-        bitcoin: 110000,
-        ethereum: 4200,
-        'avalanche-2': 24,
-        floki: 0.00009,
-        dogecoin: 0.08,
-        solana: 200,
-        cardano: 0.5,
-        ripple: 0.6,
-        binancecoin: 600,
-        litecoin: 100,
-        algorand: 0.2,
-        sui: 2,
-      };
-
-      const fallbackPriceMap: Record<string, number> = {};
-      for (const sym of symbols) {
-        const id = this.mapToCoinId(sym);
-        if (id && fallbackPrices[id]) {
-          fallbackPriceMap[sym.toUpperCase()] = fallbackPrices[id];
-        }
-      }
-      return fallbackPriceMap;
     }
+    return priceBySymbol;
   }
 }

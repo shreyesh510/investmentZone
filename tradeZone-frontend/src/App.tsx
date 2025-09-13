@@ -9,6 +9,7 @@ import { ReactToastifyProvider } from './contexts/ReactToastifyContext';
 import { SocketProvider } from './contexts/SocketContext';
 import ToastContainer from './components/toast/toastContainer';
 import { createAppRoutes } from './routes/AppRoutes';
+import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 // Component to manage body classes based on route
@@ -22,7 +23,7 @@ function RouteManager() {
       // Remove app-mode class for auth pages (allow scrolling)
       document.body.classList.remove('app-mode');
     } else {
-      // Add app-mode class for app pages (prevent scrolling)
+      // Add app-mode class for app pages (prevent body scrolling, only content scrolls)
       document.body.classList.add('app-mode');
     }
 
@@ -77,16 +78,18 @@ function App() {
           <SocketProvider>
           <Router>
             <RouteManager />
-            <div className="App h-full w-full overflow-hidden">
-              <Routes>
-                {createAppRoutes({ isAuthenticated }).map((route, index) => (
-                  <Route key={index} {...route} />
-                ))}
-              </Routes>
+            <ErrorBoundary>
+              <div className="App h-full w-full overflow-hidden">
+                <Routes>
+                  {createAppRoutes({ isAuthenticated }).map((route, index) => (
+                    <Route key={index} {...route} />
+                  ))}
+                </Routes>
 
-              {/* Global Toast Container */}
-              <ToastContainer />
-            </div>
+                {/* Global Toast Container */}
+                <ToastContainer />
+              </div>
+            </ErrorBoundary>
           </Router>
         </SocketProvider>
       </ToastProvider>

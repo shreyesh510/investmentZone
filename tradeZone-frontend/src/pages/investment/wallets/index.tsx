@@ -169,23 +169,24 @@ const WalletsPage = memo(function WalletsPage() {
   const isBank = (wallet: any) => wallet.type === 'bank' || (!wallet.type && (wallet.platform || '').toLowerCase().includes('bank'));
   const isDemat = (wallet: any) => wallet.type === 'demat' || (!wallet.type && !isBank(wallet));
 
-  const totalsByCurrency = wallets.reduce<Record<string, number>>((acc, w) => {
+  const totalsByCurrency = (wallets || []).reduce<Record<string, number>>((acc, w) => {
+    if (!w) return acc;
     const cur = (w.currency || 'USD').toUpperCase();
     const val = typeof w.balance === 'number' ? w.balance : 0;
     acc[cur] = (acc[cur] || 0) + val;
     return acc;
   }, {});
 
-  const dematTotalsByCurrency = wallets.reduce<Record<string, number>>((acc, w) => {
-    if (!isDemat(w)) return acc;
+  const dematTotalsByCurrency = (wallets || []).reduce<Record<string, number>>((acc, w) => {
+    if (!w || !isDemat(w)) return acc;
     const cur = (w.currency || 'USD').toUpperCase();
     const val = typeof w.balance === 'number' ? w.balance : 0;
     acc[cur] = (acc[cur] || 0) + val;
     return acc;
   }, {});
 
-  const bankTotalsByCurrency = wallets.reduce<Record<string, number>>((acc, w) => {
-    if (!isBank(w)) return acc;
+  const bankTotalsByCurrency = (wallets || []).reduce<Record<string, number>>((acc, w) => {
+    if (!w || !isBank(w)) return acc;
     const cur = (w.currency || 'USD').toUpperCase();
     const val = typeof w.balance === 'number' ? w.balance : 0;
     acc[cur] = (acc[cur] || 0) + val;
@@ -197,7 +198,8 @@ const WalletsPage = memo(function WalletsPage() {
   const bankInrTotal = bankTotalsByCurrency['INR'] || 0;
   const bankUsdFromInr = bankInrTotal > 0 ? bankInrTotal / 86 : 0;
 
-  const filteredWallets = wallets.filter(wallet => {
+  const filteredWallets = (wallets || []).filter(wallet => {
+    if (!wallet) return false;
     const matchesSearch = searchQuery === '' ||
       wallet.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       wallet.platform?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -265,7 +267,7 @@ const WalletsPage = memo(function WalletsPage() {
               isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700'
             }`}>
               <span className="text-sm font-medium">
-                {wallets.length} Wallets
+                {(wallets || []).length} Wallets
               </span>
             </div>
           </div>
@@ -436,7 +438,7 @@ const WalletsPage = memo(function WalletsPage() {
           <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
 
           <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {(!history || history.length === 0) ? (
+            {(!history || !Array.isArray(history) || history.length === 0) ? (
               <div className={`text-center py-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -444,12 +446,12 @@ const WalletsPage = memo(function WalletsPage() {
                 <p className="text-sm">No recent activity</p>
               </div>
             ) : (
-              history.slice(0, 10).map((item: any, index: number) => {
+              (history || []).slice(0, 10).map((item: any, index: number) => {
                 // Helper function to get wallet name from history data first, then wallets list
                 const getWalletName = (walletId: string, itemData?: any) => {
                   const byData = itemData?.name || itemData?.next?.name;
                   if (byData && typeof byData === 'string') return byData;
-                  const wallet = wallets.find(w => w.id === walletId);
+                  const wallet = (wallets || []).find(w => w && w.id === walletId);
                   return wallet?.name || 'Unknown Wallet';
                 };
 
@@ -680,13 +682,13 @@ const WalletsPage = memo(function WalletsPage() {
           open={!!editId}
           isDarkMode={isDark}
           initial={{
-            name: wallets.find(w => w.id === editId)?.name ?? '',
-            type: wallets.find(w => w.id === editId)?.type,
-            balance: wallets.find(w => w.id === editId)?.balance,
-            platform: wallets.find(w => w.id === editId)?.platform,
-            currency: wallets.find(w => w.id === editId)?.currency,
-            address: wallets.find(w => w.id === editId)?.address,
-            notes: wallets.find(w => w.id === editId)?.notes,
+            name: (wallets || []).find(w => w && w.id === editId)?.name ?? '',
+            type: (wallets || []).find(w => w && w.id === editId)?.type,
+            balance: (wallets || []).find(w => w && w.id === editId)?.balance,
+            platform: (wallets || []).find(w => w && w.id === editId)?.platform,
+            currency: (wallets || []).find(w => w && w.id === editId)?.currency,
+            address: (wallets || []).find(w => w && w.id === editId)?.address,
+            notes: (wallets || []).find(w => w && w.id === editId)?.notes,
           }}
           onCancel={() => setEditId(null)}
           onSave={async (patch) => {

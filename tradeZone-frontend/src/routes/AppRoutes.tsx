@@ -2,8 +2,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import Login from '../pages/login';
 import Zone from '../pages/zone';
+import HeaderChart from '../pages/headerChart';
 import Settings from '../pages/settings';
-import LiveChart from '../components/chart/liveChart';
 import Positions from '../pages/investment/positions';
 import InvestmentDashboard from '../pages/investment/dashboard';
 import Withdraw from '../pages/investment/withdraw';
@@ -47,7 +47,7 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
     element: (
       <ProtectedRoute>
         <AppLayout>
-          <LiveChart />
+          <HeaderChart />
         </AppLayout>
       </ProtectedRoute>
     )

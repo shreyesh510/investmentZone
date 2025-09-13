@@ -46,7 +46,7 @@ const AppLayout = ({ children, onlineUsers = [] }: AppLayoutProps) => {
   const isDarkMode = settings.theme === 'dark';
 
   return (
-    <div className={`flex h-screen overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} isMobile={isMobile} />
 
@@ -62,7 +62,7 @@ const AppLayout = ({ children, onlineUsers = [] }: AppLayoutProps) => {
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

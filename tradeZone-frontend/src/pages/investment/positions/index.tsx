@@ -105,6 +105,10 @@ const Positions = memo(function Positions() {
 
   // Show unique symbols only (keep the most recent position per symbol)
   const uniquePositions: PositionLike[] = (() => {
+    if (!Array.isArray(positions) || positions.length === 0) {
+      return [];
+    }
+
     const bySymbol = new Map<string, Position>();
     const toEpoch = (p: Position): number => {
       const t1 = p.createdAt ? new Date(p.createdAt).getTime() : NaN;
@@ -112,9 +116,12 @@ const Positions = memo(function Positions() {
       const t3 = p.timestamp ? Date.parse(p.timestamp) : NaN;
       return Math.max(Number.isFinite(t1) ? t1 : 0, Number.isFinite(t2) ? t2 : 0, Number.isFinite(t3) ? t3 : 0);
     };
-    const looksAggregated = positions.every((p: any) => !('id' in p) && 'pnl' in p && !('entryPrice' in p));
+
+    const looksAggregated = positions.every((p: any) => p && !('id' in p) && 'pnl' in p && !('entryPrice' in p));
     if (looksAggregated) return positions as AggregatedPosition[];
+
     (positions as Position[]).forEach((p) => {
+      if (!p || !p.symbol) return;
       const key = p.symbol.toUpperCase();
       const existing = bySymbol.get(key);
       if (!existing) {
@@ -469,7 +476,7 @@ const Positions = memo(function Positions() {
             </div>
             <div>
               <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Symbols</h3>
-              <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{filteredPositions.length}</p>
+              <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{(filteredPositions || []).length}</p>
             </div>
           </div>
 
@@ -482,7 +489,7 @@ const Positions = memo(function Positions() {
             </div>
             <div>
               <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Investment</h3>
-              <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>${filteredPositions.reduce((s: number, p: any) => s + (p.investedAmount || 0), 0).toFixed(2)}</p>
+              <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>${(filteredPositions || []).reduce((s: number, p: any) => s + (p?.investedAmount || 0), 0).toFixed(2)}</p>
             </div>
           </div>
 
@@ -504,11 +511,11 @@ const Positions = memo(function Positions() {
             <div>
               <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total P&L</h3>
               <p className={`text-xl font-semibold ${
-                filteredPositions.reduce((s: number, p: any) => s + (p.pnl || 0), 0) >= 0 
+                (filteredPositions || []).reduce((s: number, p: any) => s + (p?.pnl || 0), 0) >= 0
                   ? (isDarkMode ? 'text-green-400' : 'text-green-600')
                   : (isDarkMode ? 'text-red-400' : 'text-red-600')
               }`}>
-                {filteredPositions.reduce((s: number, p: any) => s + (p.pnl || 0), 0) >= 0 ? '+' : ''}${filteredPositions.reduce((s: number, p: any) => s + (p.pnl || 0), 0).toFixed(2)}
+                {(filteredPositions || []).reduce((s: number, p: any) => s + (p?.pnl || 0), 0) >= 0 ? '+' : ''}${(filteredPositions || []).reduce((s: number, p: any) => s + (p?.pnl || 0), 0).toFixed(2)}
               </p>
             </div>
           </div>
@@ -629,7 +636,7 @@ const Positions = memo(function Positions() {
       {/* Positions Grid */}
       {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
-          {filteredPositions.map((position: any) => {
+          {(filteredPositions || []).map((position: any) => {
             return (
               <div
                 key={(position as any).id ?? (position as any).symbol}
@@ -644,7 +651,7 @@ const Positions = memo(function Positions() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {position.symbol}
+                        {position?.symbol || 'Unknown'}
                       </h3>
                       {('status' in position && position.status === 'closed') && (
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -677,14 +684,14 @@ const Positions = memo(function Positions() {
                   <div className="flex justify-between items-center">
                     <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Lots</span>
                     <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                      {position.lots}
+                      {position?.lots || 0}
                     </span>
                   </div>
                   
                   <div className="flex justify-between items-center">
                     <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Invested</span>
                     <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                      ${Number(position.investedAmount || 0).toFixed(2)}
+                      ${Number(position?.investedAmount || 0).toFixed(2)}
                     </span>
                   </div>
 
@@ -790,7 +797,7 @@ const Positions = memo(function Positions() {
                   <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>No recent activity</p>
                 </div>
               )}
-              {!activityLoading && activity.map((item, idx) => {
+              {!activityLoading && (activity || []).map((item, idx) => {
                 const created = item.createdAt ? new Date(item.createdAt) : null;
                 const minutesAgo = created ? Math.floor((Date.now() - created.getTime()) / 60000) : null;
                 const timeLabel = minutesAgo === null
