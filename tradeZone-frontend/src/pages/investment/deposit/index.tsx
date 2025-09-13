@@ -8,6 +8,15 @@ import type { AppDispatch, RootState } from '../../../redux/store';
 import { fetchDeposits, createDeposit, updateDeposit, deleteDeposit } from '../../../redux/thunks/deposits/depositsThunks';
 import ConfirmModal from '../../../components/modal/confirmModal';
 import { AddDepositModal, EditDepositModal } from './components/modal';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 
 // Using API DTO via Redux now
@@ -21,6 +30,10 @@ interface ChartDataPoint {
 
 type TimeFilter = '1M' | '1W' | '6M' | '1Y' | '5Y';
 type MobileTab = 'chart' | 'list';
+
+// Helper functions for formatting
+const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
 const Deposit = memo(function Deposit() {
   const navigate = useNavigate();
@@ -86,7 +99,7 @@ const Deposit = memo(function Deposit() {
     const now = new Date();
     const dataPoints: ChartDataPoint[] = [];
     let days = 30; // Default 1M
-    
+
     switch (timeFilter) {
       case '1W': days = 7; break;
       case '1M': days = 30; break;
@@ -95,29 +108,59 @@ const Deposit = memo(function Deposit() {
       case '5Y': days = 1825; break;
     }
 
-    // Generate deposit data for the selected period
+    // Filter deposits within the selected time period first
+    const cutoffDate = new Date(now);
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const filteredDeposits = deposits.filter(d => {
+      const depositDate = new Date((d as any).requestedAt || (d as any).depositedAt);
+      return depositDate >= cutoffDate && depositDate <= now;
+    });
+
+    // Generate daily cumulative data for the selected period
     for (let i = days; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      
-      // Calculate total deposits up to this date
+
+      // Calculate deposits made on or before this date (within the filtered set)
       const dateStr = date.toISOString().split('T')[0];
-      const depositsUpToDate = deposits.filter(d => 
+      const depositsUpToDate = filteredDeposits.filter(d =>
         new Date((d as any).requestedAt || (d as any).depositedAt) <= date
       );
       const totalAmount = depositsUpToDate.reduce((sum, d) => sum + d.amount, 0);
-      
+
       dataPoints.push({
         date: dateStr,
         amount: totalAmount
       });
     }
-    
+
     return dataPoints;
   };
 
   const chartData = generateChartData(selectedTimeFilter);
 
+  // Custom Tooltip Component
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      return (
+        <div className={`rounded-lg border p-3 shadow-lg ${
+          isDarkMode
+            ? 'bg-gray-800 border-gray-700 text-white'
+            : 'bg-white border-gray-300 text-gray-900'
+        }`}>
+          <p className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {formatDate(label)}
+          </p>
+          <p className="font-bold text-green-500">
+            {formatCurrency(data.value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const handleDepositSubmit = async (data: { amount: number; platform: string; description: string }) => {
     try {
@@ -467,145 +510,48 @@ const Deposit = memo(function Deposit() {
                 </button>
               </div>
             </div>
-            <div className="relative h-48 mb-4">
-              <div className={`absolute inset-0 rounded-lg ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-                <svg className="w-full h-full p-4" viewBox="0 0 400 160">
-                  {/* Grid Lines */}
-                  <defs>
-                    <pattern id="depositgrid" width="40" height="32" patternUnits="userSpaceOnUse">
-                      <path d="M 40 0 L 0 0 0 32" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="1" opacity="0.5"/>
-                    </pattern>
-                    <linearGradient id="depositGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.4"/>
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.1"/>
-                    </linearGradient>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#depositgrid)" />
-
-                  {/* Generate horizontal line chart from deposit data */}
-                  {(() => {
-                    if (!chartData || chartData.length === 0) {
-                      return (
-                        <text x="200" y="80" textAnchor="middle" fill={isDarkMode ? '#9CA3AF' : '#6B7280'} className="text-sm">
-                          No deposit data available
-                        </text>
-                      );
-                    }
-
-                    const rawValues = chartData.map(d => d.amount).filter(v => isFinite(v));
-                    if (rawValues.length === 0) {
-                      return (
-                        <text x="200" y="80" textAnchor="middle" fill={isDarkMode ? '#9CA3AF' : '#6B7280'} className="text-sm">
-                          No deposit data available
-                        </text>
-                      );
-                    }
-
-                    const maxAmount = Math.max(...rawValues);
-                    const minAmount = Math.min(...rawValues);
-                    const width = 360;
-                    const height = 120;
-                    const padding = 20;
-
-                    const denom = (maxAmount - minAmount) === 0 ? 1 : (maxAmount - minAmount);
-                    const points = chartData.map((item, index) => {
-                      const safeValue = typeof item.amount === 'number' && isFinite(item.amount) ? item.amount : minAmount;
-                      const base = (chartData.length - 1) || 1;
-                      const x = padding + (index * (width - 2 * padding)) / base;
-                      const normalizedValue = (safeValue - minAmount) / denom;
-                      const y = height - padding - (normalizedValue * (height - 2 * padding));
-
-                      const dateStr = new Date(item.date).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                      });
-
-                      return { x, y, amount: item.amount, date: item.date, dateStr };
-                    });
-
-                    const pathData = points
-                      .map((point, index) => {
-                        const px = isFinite(point.x) ? point.x : padding;
-                        const py = isFinite(point.y) ? point.y : (height / 2);
-                        return `${index === 0 ? 'M' : 'L'} ${px} ${py}`;
-                      })
-                      .join(' ');
-
-                    return (
-                      <g>
-                        {/* Area under the line */}
-                        <path
-                          d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
-                          fill="url(#depositGradient)"
-                          opacity="0.3"
-                        />
-
-                        {/* Main line */}
-                        <path
-                          d={pathData}
-                          fill="none"
-                          stroke="#10b981"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-
-                        {/* Data points with hover effects */}
-                        {points.map((point, index) => {
-                          const px = isFinite(point.x) ? point.x : padding;
-                          const py = isFinite(point.y) ? point.y : (height / 2);
-                          return (
-                            <g key={index}>
-                              {/* Outer glow */}
-                              <circle
-                                cx={px}
-                                cy={py}
-                                r="6"
-                                fill="#10b981"
-                                opacity="0.2"
-                                className="animate-pulse"
-                              />
-                              {/* Main point */}
-                              <circle
-                                cx={px}
-                                cy={py}
-                                r="4"
-                                fill="#10b981"
-                                stroke="#fff"
-                                strokeWidth="2"
-                                className="hover:r-6 transition-all cursor-pointer"
-                              />
-                              {/* Tooltip trigger */}
-                              <circle
-                                cx={px}
-                                cy={py}
-                                r="10"
-                                fill="transparent"
-                                className="cursor-pointer"
-                              >
-                                <title>{`${point.dateStr}: $${point.amount.toLocaleString()}`}</title>
-                              </circle>
-                            </g>
-                          );
-                        })}
-                      </g>
-                    );
-                  })()}
-                </svg>
-              </div>
-            </div>
-
-            {/* Chart Legend */}
-            <div className="flex items-center justify-between text-xs">
-              {chartData.length > 1 && [
-                chartData[0]?.date,
-                chartData.length > 2 ? chartData[Math.floor(chartData.length / 2)]?.date : null,
-                chartData[chartData.length - 1]?.date
-              ].filter(Boolean).map((date, index) => (
-                <span key={index} className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-              ))}
+            <div className="h-64 sm:h-80">
+              {chartData.length === 0 ? (
+                <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div className="text-center">
+                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-lg font-medium">No deposit data</p>
+                    <p className="text-sm opacity-75">Data will appear here once you make deposits</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke={isDarkMode ? '#374151' : '#E5E7EB'}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                      fontSize={12}
+                      tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis
+                      stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                      fontSize={12}
+                      tickFormatter={formatCurrency}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#10B981"
+                      strokeWidth={3}
+                      dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: '#34D399' }}
+                      name="Deposited Amount"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
