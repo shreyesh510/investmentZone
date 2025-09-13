@@ -8,7 +8,8 @@
       "Bash(npm run dev:*)",
       "Bash(git add:*)",
       "Bash(npm run start:dev:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
