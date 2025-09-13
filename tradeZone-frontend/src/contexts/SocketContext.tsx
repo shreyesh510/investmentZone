@@ -4,7 +4,7 @@ import { useAppSelector } from '../redux/hooks';
 import { useToast } from './toastContext';
 import { messageStorage } from '../services/messageStorage';
 import { type Message } from '../types/message';
-import config from '../config/env';
+import { config } from '../config/env';
 
 interface SocketContextType {
   socket: Socket | null;
