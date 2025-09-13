@@ -444,34 +444,209 @@ const WalletsPage = memo(function WalletsPage() {
                 <p className="text-sm">No recent activity</p>
               </div>
             ) : (
-              history.slice(0, 10).map((item: any, index: number) => (
-                <div key={item.id || index} className={`p-3 rounded-lg border transition-all duration-200 ${
-                  isDark
-                    ? 'bg-gray-700/30 border-gray-600/50 hover:bg-gray-700/50'
-                    : 'bg-white/70 border-gray-200/50 hover:bg-white/90'
-                }`}>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
+              history.slice(0, 10).map((item: any, index: number) => {
+                // Helper function to get wallet name from history data first, then wallets list
+                const getWalletName = (walletId: string, itemData?: any) => {
+                  const byData = itemData?.name || itemData?.next?.name;
+                  if (byData && typeof byData === 'string') return byData;
+                  const wallet = wallets.find(w => w.id === walletId);
+                  return wallet?.name || 'Unknown Wallet';
+                };
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                            {item.action || 'Activity'}
-                          </p>
-                          <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'} truncate`}>
-                            Wallet activity
-                          </p>
+                // Helper function to format date properly
+                const formatDate = (dateValue: any) => {
+                  if (!dateValue) return 'Unknown date';
+
+                  try {
+                    let date: Date;
+
+                    if (typeof dateValue === 'string') {
+                      date = new Date(dateValue);
+                    } else if (dateValue.seconds && dateValue.nanoseconds !== undefined) {
+                      // Firestore Timestamp object
+                      date = new Date(dateValue.seconds * 1000 + dateValue.nanoseconds / 1000000);
+                    } else if (dateValue._seconds) {
+                      // Alternative Firestore Timestamp format
+                      date = new Date(dateValue._seconds * 1000);
+                    } else if (dateValue instanceof Date) {
+                      date = dateValue;
+                    } else {
+                      date = new Date(dateValue);
+                    }
+
+                    if (isNaN(date.getTime())) {
+                      return 'Invalid date';
+                    }
+
+                    return date.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+                  } catch (error) {
+                    console.warn('Date formatting error:', error, dateValue);
+                    return 'Invalid date';
+                  }
+                };
+
+                // Get action display text and details
+                const getActionDetails = (action: string, data?: any) => {
+                  switch (action) {
+                    case 'create':
+                      return {
+                        title: 'Wallet Created',
+                        details: data?.next ? [
+                          `Platform: ${data.next.platform || 'N/A'}`,
+                          `Balance: ${data.next.currency || 'USD'} ${(data.next.balance || 0).toLocaleString()}`,
+                          ...(data.next.notes ? [`Notes: ${data.next.notes}`] : [])
+                        ] : []
+                      };
+                    case 'update':
+                      const changes = [];
+
+                      // Enhanced balance display with currency and difference
+                      if (data?.changes?.balance) {
+                        const fromBalance = data.changes.balance.from || 0;
+                        const toBalance = data.changes.balance.to || 0;
+                        const currency = data?.next?.currency || data?.prev?.currency || 'USD';
+                        const difference = toBalance - fromBalance;
+                        const diffSign = difference > 0 ? '+' : '';
+                        const diffColor = difference > 0 ? 'increase' : difference < 0 ? 'decrease' : 'neutral';
+
+                        changes.push(`Balance: ${currency} ${fromBalance.toLocaleString()} → ${currency} ${toBalance.toLocaleString()}`);
+                        if (difference !== 0) {
+                          changes.push(`Amount Changed: ${diffSign}${currency} ${Math.abs(difference).toLocaleString()} ${diffColor === 'increase' ? '📈' : diffColor === 'decrease' ? '📉' : ''}`);
+                        }
+                      }
+
+                      // Check for direct balance update (sometimes it's stored differently)
+                      if (!data?.changes?.balance && data?.next?.balance && data?.prev?.balance) {
+                        const fromBalance = data.prev.balance || 0;
+                        const toBalance = data.next.balance || 0;
+                        const currency = data.next.currency || data.prev.currency || 'USD';
+                        const difference = toBalance - fromBalance;
+                        const diffSign = difference > 0 ? '+' : '';
+
+                        changes.push(`Balance: ${currency} ${fromBalance.toLocaleString()} → ${currency} ${toBalance.toLocaleString()}`);
+                        if (difference !== 0) {
+                          changes.push(`Amount Changed: ${diffSign}${currency} ${Math.abs(difference).toLocaleString()} ${difference > 0 ? '📈' : '📉'}`);
+                        }
+                      }
+
+                      if (data?.changes?.platform) {
+                        changes.push(`Platform: ${data.changes.platform.from || 'N/A'} → ${data.changes.platform.to || 'N/A'}`);
+                      }
+                      if (data?.changes?.name) {
+                        changes.push(`Name: ${data.changes.name.from || 'N/A'} → ${data.changes.name.to || 'N/A'}`);
+                      }
+                      if (data?.changes?.notes) {
+                        changes.push(`Notes: ${data.changes.notes.from || 'None'} → ${data.changes.notes.to || 'None'}`);
+                      }
+
+                      return {
+                        title: 'Wallet Updated',
+                        details: changes.length > 0 ? changes : ['Details updated']
+                      };
+                    case 'delete':
+                      return {
+                        title: 'Wallet Deleted',
+                        details: data?.prev ? [
+                          `Platform: ${data.prev.platform || 'N/A'}`,
+                          `Last Balance: ${data.prev.currency || 'USD'} ${(data.prev.balance || 0).toLocaleString()}`
+                        ] : []
+                      };
+                    default:
+                      return {
+                        title: action || 'Activity',
+                        details: []
+                      };
+                  }
+                };
+
+                // Get action icon
+                const getActionIcon = (action: string) => {
+                  switch (action) {
+                    case 'create':
+                      return (
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      );
+                    case 'update':
+                      return (
+                        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      );
+                    case 'delete':
+                      return (
+                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      );
+                    default:
+                      return (
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      );
+                  }
+                };
+
+                const actionDetails = getActionDetails(item.action, item.data);
+
+                return (
+                  <div key={item.id || index} className={`p-3 rounded-lg border transition-all duration-200 ${
+                    isDark
+                      ? 'bg-gray-700/30 border-gray-600/50 hover:bg-gray-700/50'
+                      : 'bg-white/70 border-gray-200/50 hover:bg-white/90'
+                  }`}>
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getActionIcon(item.action)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              {actionDetails.title}
+                            </p>
+                            <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'} font-medium`}>
+                              {getWalletName(item.walletId, item.data)}
+                            </p>
+
+                            {/* Show details */}
+                            {actionDetails.details.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {actionDetails.details.slice(0, 3).map((detail, idx) => (
+                                  <p key={idx} className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {detail}
+                                  </p>
+                                ))}
+                                {actionDetails.details.length > 3 && (
+                                  <p className={`text-xs italic ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                    +{actionDetails.details.length - 3} more changes...
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="text-right ml-2">
+                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                              {formatDate(item.createdAt || item.updatedAt)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
