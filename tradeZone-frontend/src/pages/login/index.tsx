@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, clearError } from '../../redux/slices/authSlice';
 import type { AppDispatch, RootState } from '../../redux/store';
-import ConnectionTest from '../../components/connectionTest';
+import ConnectionTest from '../../components/ConnectionTest';
 import Input from '../../components/input';
 import Button from '../../components/button';
 

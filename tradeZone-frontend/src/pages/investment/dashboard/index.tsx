@@ -1,6 +1,6 @@
 import { memo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Header from '../../../layouts/header';
+import Header from '../../../layouts/Header';
 import Sidebar from '../../../layouts/sidebar';
 import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import RoundedButton from '../../../components/button/RoundedButton';

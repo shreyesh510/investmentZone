@@ -1,6 +1,6 @@
 import { memo, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import Header from '../../../layouts/header';
+import Header from '../../../layouts/Header';
 import Sidebar from '../../../layouts/sidebar';
 import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { useSettings } from '../../../contexts/settingsContext';

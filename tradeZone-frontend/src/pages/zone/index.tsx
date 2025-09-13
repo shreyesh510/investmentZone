@@ -1,7 +1,7 @@
 import { memo, useState, useEffect } from 'react';
 import LiveChart from '../../components/chart/liveChart';
-import Header from '../../layouts/header';
-import Chat from '../dashboard/components/chat';
+import Header from '../../layouts/Header';
+import Chat from '../dashboard/components/Chat';
 import Sidebar from '../../layouts/sidebar';
 import FloatingButton, { type MobileTab } from '../../components/button/floatingButton';
 import ResizablePane from '../../layouts/resizablePane';

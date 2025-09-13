@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useSettings } from '../../../contexts/settingsContext';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../../layouts/header';
+import Header from '../../../layouts/Header';
 import Sidebar from '../../../layouts/sidebar';
 import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { usePermissions } from '../../../hooks/usePermissions';
