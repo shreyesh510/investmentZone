@@ -31,34 +31,8 @@ const Header = ({ onlineUsers, sidebarOpen, onSidebarToggle }: HeaderProps) => {
   const isDarkMode = settings.theme === 'dark';
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b p-4 flex justify-between items-center`}>
+    <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b p-4 flex justify-between items-center h-16`}>
       <div className="flex items-center space-x-4">
-        {/* Menu Toggle Button - Hidden on mobile */}
-        <button
-          onClick={onSidebarToggle}
-          className={`p-1 rounded-lg transition-colors duration-200 mr-2 hidden md:block ${
-            isDarkMode 
-              ? 'text-gray-400 hover:text-white hover:bg-gray-700'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200'
-          }`}
-          title={sidebarOpen ? 'Close Menu' : 'Open Menu'}
-        >
-          <svg 
-            className="w-6 h-6" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            {sidebarOpen ? (
-              // X icon when sidebar is open
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              // Hamburger menu when sidebar is closed
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
-        
         <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Zone</h1>
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">

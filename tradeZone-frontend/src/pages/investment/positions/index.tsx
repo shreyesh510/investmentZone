@@ -3,9 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import { useSettings } from '../../../contexts/settingsContext';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { usePageTitle, PAGE_TITLES } from '../../../hooks/usePageTitle';
 import type { RootState, AppDispatch } from '../../../redux/store';
@@ -21,11 +18,6 @@ import { ModifyPositionModal, ClosePositionModal } from './components';
 import { ImportPositionsModal } from './components/modal';
 import { positionsApi } from '../../../services/positionsApi';
 
-interface OnlineUser {
-  userId: string;
-  userName: string;
-  socketId: string;
-}
 
 interface PositionForm {
   symbol: string;
@@ -43,8 +35,6 @@ const Positions = memo(function Positions() {
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -117,7 +107,6 @@ const Positions = memo(function Positions() {
     return () => { mounted = false; clearInterval(id); };
   }, []);
 
-  const toggleSidebar = () => setSidebarOpen((v) => !v);
   const handleTabChange = (tab: MobileTab) => setActiveTab(tab);
   const isDarkMode = settings.theme === 'dark';
 
@@ -862,10 +851,8 @@ const Positions = memo(function Positions() {
   }
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header onlineUsers={onlineUsers} sidebarOpen={sidebarOpen} onSidebarToggle={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">{content}</div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col p-6 overflow-y-auto`}>
+      {content}
 
       {/* Import Modal */}
       {showImport && (

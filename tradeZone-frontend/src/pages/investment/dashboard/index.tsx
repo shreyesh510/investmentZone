@@ -1,8 +1,5 @@
 import { memo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Header from '../../../layouts/Header';
-import Sidebar from '../../../layouts/sidebar';
-import FloatingButton, { type MobileTab } from '../../../components/button/floatingButton';
 import RoundedButton from '../../../components/button/RoundedButton';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
@@ -58,11 +55,8 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   const { settings } = useSettings();
   const { canAccessInvestment } = usePermissions();
   
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>('chart');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   // Redux state - using both old and new dashboard for transition
   const { data: oldDashboardData, loading: oldLoading, error: oldError } = useSelector((state: RootState) => state.dashboard);
@@ -184,13 +178,6 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
     dispatch(setTimeframe(selectedTimeFilter));
   }, [dispatch, selectedTimeFilter]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleTabChange = (tab: MobileTab) => {
-    setActiveTab(tab);
-  };
 
   const isDarkMode = settings.theme === 'dark';
 
@@ -1227,16 +1214,8 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   }
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col`}>
-      <Header 
-        onlineUsers={onlineUsers} 
-        sidebarOpen={sidebarOpen} 
-        onSidebarToggle={toggleSidebar} 
-      />
-      <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
-      <div className="flex-1 flex min-h-0 overflow-hidden">
-        {content}
-      </div>
+    <div className={`h-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex flex-col overflow-hidden`}>
+      {content}
     </div>
   );
 });
