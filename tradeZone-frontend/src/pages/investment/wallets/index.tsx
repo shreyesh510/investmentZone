@@ -526,6 +526,27 @@ const WalletsPage = memo(function WalletsPage() {
                     }
                   };
 
+                  // Get amount from activity data
+                  const getActivityAmount = (action: string, data?: any) => {
+                    switch (action) {
+                      case 'create':
+                        return data?.next?.balance;
+                      case 'update':
+                        return data?.changes?.balance?.to || data?.next?.balance;
+                      case 'delete':
+                        return data?.prev?.balance;
+                      default:
+                        return null;
+                    }
+                  };
+
+                  // Format currency amount with USD conversion
+                  const formatActivityCurrency = (amount: number) => {
+                    if (!amount) return '';
+                    const usdAmount = (amount / 89).toFixed(2);
+                    return `₹${amount.toLocaleString()} ($${usdAmount})`;
+                  };
+
       // Get action display text
       const getActionText = (action: string, data?: any) => {
                     switch (action) {
@@ -592,6 +613,12 @@ const WalletsPage = memo(function WalletsPage() {
                               <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'} truncate`}>
                                 {getWalletName(item.walletId, item.data)}
                               </p>
+                              {/* Show amount if available */}
+                              {getActivityAmount(item.action, item.data) && (
+                                <p className={`text-xs mt-0.5 font-medium ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                                  {formatActivityCurrency(getActivityAmount(item.action, item.data))}
+                                </p>
+                              )}
                               {/* Additional details if available */}
                               {item.action === 'create' && item.data?.next?.name && (
                                 <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>

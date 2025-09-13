@@ -9,10 +9,14 @@
   }
 }
 
-/* Prevent scrolling issues on mobile */
+/* Prevent scrolling issues on mobile - but allow scrolling for login/register pages */
 html, body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Only apply fixed positioning and overflow hidden to dashboard and app pages */
+html.app-mode, body.app-mode {
   overflow: hidden;
   position: fixed;
   width: 100%;
@@ -66,12 +70,16 @@ body {
   height: 100vh;
   height: 100svh;
   background-color: #1e222d;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Apply fixed positioning only in app mode */
+body.app-mode {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
 }
 
 h1 {
