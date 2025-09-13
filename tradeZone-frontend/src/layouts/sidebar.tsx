@@ -41,6 +41,11 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
 
+  const goToChart = () => {
+    navigate('/chart');
+    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
+  };
+
   // Investment submenu navigation functions
   const goToInvestmentDashboard = () => {
     navigate('/investment/dashboard');
@@ -197,6 +202,38 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {isOpen && <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>Zone</span>}
+            </div>
+          </button>
+
+          {/* Chart Option */}
+          <button
+            onClick={goToChart}
+            className={`flex items-center transition-all duration-200 w-full relative ${
+              isOpen ? 'px-4 py-4' : 'justify-center px-2 py-4'
+            } ${
+              isActivePath('/chart')
+                ? isDarkMode
+                  ? 'bg-gray-700 border-l-4 border-blue-400'
+                  : 'bg-gray-50 border-l-4 border-blue-500'
+                : isDarkMode
+                  ? 'bg-transparent hover:bg-gray-700'
+                  : 'bg-transparent hover:bg-gray-100'
+            }`}
+            title={!isOpen ? 'Chart' : ''}
+          >
+            <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
+              <svg className={`w-5 h-5 flex-shrink-0 ${
+                isActivePath('/chart')
+                  ? isDarkMode
+                    ? 'text-blue-400'
+                    : 'text-blue-600'
+                  : isDarkMode
+                    ? 'text-gray-400'
+                    : 'text-gray-600'
+              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              {isOpen && <span className={isDarkMode ? 'text-white' : 'text-gray-900'}>Chart</span>}
             </div>
           </button>
 

@@ -23,7 +23,7 @@ function RouteManager() {
       // Remove app-mode class for auth pages (allow scrolling)
       document.body.classList.remove('app-mode');
     } else {
-      // Add app-mode class for app pages (prevent scrolling)
+      // Add app-mode class for app pages (prevent body scrolling, only content scrolls)
       document.body.classList.add('app-mode');
     }
 
