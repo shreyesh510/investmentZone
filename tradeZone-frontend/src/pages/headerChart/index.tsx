@@ -56,28 +56,28 @@ const HeaderChart = memo(function HeaderChart() {
   return (
     <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
-      <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
-        <div className="flex items-center justify-between">
+      <div className={`p-4 md:p-6 border-b ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-xl md:text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Market Overview
             </h1>
-            <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`text-xs md:text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Real-time cryptocurrency prices and 24h changes
             </p>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-4">
             {/* Timeframe Selector */}
-            <div className="flex items-center space-x-2">
-              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <label className={`text-xs md:text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Timeframe:
               </label>
               <select
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className={`px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`flex-1 md:flex-none px-3 py-2 border rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isDarkMode
                     ? 'border-gray-600 bg-gray-700 text-white'
                     : 'border-gray-300 bg-white text-gray-900'
@@ -92,10 +92,10 @@ const HeaderChart = memo(function HeaderChart() {
             </div>
 
             {/* Multi-Selector */}
-            <div className="relative">
+            <div className="relative w-full md:w-auto">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`inline-flex items-center px-4 py-2 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                className={`w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border rounded-lg text-xs md:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   isDarkMode
                     ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600 focus:ring-blue-500'
                     : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500'
@@ -112,7 +112,7 @@ const HeaderChart = memo(function HeaderChart() {
 
               {/* Dropdown */}
             {isDropdownOpen && (
-              <div className={`absolute right-0 mt-2 w-64 rounded-lg shadow-lg z-50 ${
+              <div className={`absolute left-0 md:right-0 mt-2 w-full md:w-64 rounded-lg shadow-lg z-50 ${
                 isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
               } border`}>
                 <div className="p-2">
@@ -147,11 +147,11 @@ const HeaderChart = memo(function HeaderChart() {
 
         {/* Selected Symbols Tags */}
         {selectedSymbols.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-1 md:gap-2">
             {selectedSymbols.map((symbol) => (
               <span
                 key={symbol}
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                className={`inline-flex items-center px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
                   isDarkMode
                     ? 'bg-blue-900 text-blue-200'
                     : 'bg-blue-100 text-blue-800'
@@ -175,7 +175,7 @@ const HeaderChart = memo(function HeaderChart() {
       </div>
 
       {/* Charts Grid */}
-      <div className="p-6">
+      <div className="p-2 md:p-6">
         {selectedSymbols.length === 0 ? (
           <div className={`flex items-center justify-center h-64 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <div className="text-center">
@@ -187,33 +187,32 @@ const HeaderChart = memo(function HeaderChart() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(700px, 1fr))' }}>
+          <div className="grid gap-2 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
             {selectedSymbols.map((symbol) => (
               <div
                 key={`${symbol}-${selectedTimeframe}`}
-                className={`relative rounded-lg overflow-hidden shadow-sm border ${
+                className={`w-full h-80 md:h-[500px] relative rounded-lg overflow-hidden shadow-sm border ${
                   isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                 }`}
-                style={{ width: '700px', height: '500px' }}
               >
                 {/* Chart Header */}
-                <div className={`absolute top-0 left-0 right-0 z-10 px-4 py-2 ${
+                <div className={`absolute top-0 left-0 right-0 z-10 px-2 md:px-4 py-2 ${
                   isDarkMode ? 'bg-gray-800/95' : 'bg-white/95'
                 } backdrop-blur-sm border-b ${
                   isDarkMode ? 'border-gray-700' : 'border-gray-200'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <div className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <div className={`text-sm md:text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {symbol}
                     </div>
-                    <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <div className={`text-xs md:text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       {timeframes.find(tf => tf.value === selectedTimeframe)?.label}
                     </div>
                   </div>
                 </div>
 
                 {/* Chart Container */}
-                <div className="h-full pt-14">
+                <div className="h-full pt-10 md:pt-14">
                   <LiveChart
                     key={`${symbol}-${selectedTimeframe}`}
                     symbol={symbol}
