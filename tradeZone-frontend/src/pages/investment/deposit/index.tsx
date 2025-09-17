@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../../../redux/store';
 import { fetchDeposits, createDeposit, updateDeposit, deleteDeposit } from '../../../redux/thunks/deposits/depositsThunks';
+import { fetchWithdrawals } from '../../../redux/thunks/withdrawals/withdrawalsThunks';
 import ConfirmModal from '../../../components/modal/confirmModal';
 import { AddDepositModal, EditDepositModal } from './components/modal';
 import {
@@ -35,6 +36,15 @@ type MobileTab = 'chart' | 'list';
 const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
+// Format currency with both INR and USD
+const formatCurrencyWithUSD = (amount: number) => {
+  const usdAmount = (amount / 89).toFixed(2);
+  return {
+    inr: `₹${amount.toLocaleString()}`,
+    usd: `$${usdAmount}`
+  };
+};
+
 const Deposit = memo(function Deposit() {
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -48,6 +58,7 @@ const Deposit = memo(function Deposit() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const { items: deposits, loading, creating, error } = useSelector((s: RootState) => s.deposits);
+  const withdrawals = useSelector((state: RootState) => state.withdrawals.items);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
@@ -69,9 +80,10 @@ const Deposit = memo(function Deposit() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load deposits from API
+  // Load deposits and withdrawals from API
   useEffect(() => {
     dispatch(fetchDeposits());
+    dispatch(fetchWithdrawals());
   }, [dispatch]);
 
   // Refetch when window gains focus or page becomes visible
@@ -213,10 +225,45 @@ const Deposit = memo(function Deposit() {
     });
 
   const totalDeposits = filteredDeposits.reduce((sum, d) => sum + d.amount, 0);
-  
+
   // Statistics calculations
   const avgDeposit = filteredDeposits.length > 0 ? totalDeposits / filteredDeposits.length : 0;
   const maxDeposit = filteredDeposits.length > 0 ? Math.max(...filteredDeposits.map(d => d.amount)) : 0;
+
+  // Calculate withdrawal total based on the same timeframe filter
+  const calculateWithdrawalTotal = () => {
+    if (!withdrawals || withdrawals.length === 0) return 0;
+
+    const now = new Date();
+    let cutoffDate = new Date();
+
+    switch (selectedTimeFilter) {
+      case '1W': cutoffDate.setDate(now.getDate() - 7); break;
+      case '1M': cutoffDate.setMonth(now.getMonth() - 1); break;
+      case '6M': cutoffDate.setMonth(now.getMonth() - 6); break;
+      case '1Y': cutoffDate.setFullYear(now.getFullYear() - 1); break;
+      case '5Y': cutoffDate.setFullYear(now.getFullYear() - 5); break;
+    }
+
+    return withdrawals
+      .filter(w => {
+        // Filter by status - include completed and pending
+        if (w.status !== 'completed' && w.status !== 'pending') return false;
+
+        // Filter by timeframe
+        const dateField = w.completedAt || w.requestedAt;
+        if (!dateField) return false;
+        const withdrawalDate = new Date(dateField);
+        return withdrawalDate >= cutoffDate;
+      })
+      .reduce((sum, w) => sum + (w.amount || 0), 0);
+  };
+
+  // Calculate net amount (withdrawals - deposits) = profit/return
+  const calculateNetAmount = () => {
+    const totalWithdrawals = calculateWithdrawalTotal();
+    return totalWithdrawals - totalDeposits;
+  };
 
   const content = (
     <div className={`flex-1 p-3 sm:p-6 overflow-y-auto overflow-x-hidden ${
@@ -379,6 +426,89 @@ const Deposit = memo(function Deposit() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Combined Withdrawals & Net Return Card */}
+          <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+          }`}>
+            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Withdrawal & Return Overview ({selectedTimeFilter})
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Total Withdrawals */}
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-500">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Withdrawals</p>
+                  <div className="flex flex-col space-y-1">
+                    <p className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                      {formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
+                    </p>
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-orange-300' : 'text-orange-500'}`}>
+                      {formatCurrencyWithUSD(calculateWithdrawalTotal()).usd}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Net Return */}
+              <div className="flex items-center space-x-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  calculateNetAmount() >= 0
+                    ? 'bg-gradient-to-br from-green-500 to-emerald-500'
+                    : 'bg-gradient-to-br from-red-500 to-rose-500'
+                }`}>
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {calculateNetAmount() >= 0 ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8M3 17l4-4m0 0V9m0 4l4-4" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8M3 7l4 4m0 0v4m0-4l4-4" />
+                    )}
+                  </svg>
+                </div>
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Return</p>
+                  <div className="flex flex-col space-y-1">
+                    <p className={`text-xl font-bold ${
+                      calculateNetAmount() >= 0
+                        ? (isDarkMode ? 'text-green-400' : 'text-green-600')
+                        : (isDarkMode ? 'text-red-400' : 'text-red-600')
+                    }`}>
+                      {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
+                    </p>
+                    <p className={`text-sm font-medium ${
+                      calculateNetAmount() >= 0
+                        ? (isDarkMode ? 'text-green-300' : 'text-green-500')
+                        : (isDarkMode ? 'text-red-300' : 'text-red-500')
+                    }`}>
+                      {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-700/30 flex justify-between items-center text-xs">
+              <div className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
+                <span>Net Return = Withdrawals - Deposits</span>
+                {withdrawals && withdrawals.length > 0 && (
+                  <span className="ml-4">• {withdrawals.length} withdrawal records</span>
+                )}
+              </div>
+              <span className={`px-2 py-1 rounded ${
+                calculateNetAmount() >= 0
+                  ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+                  : (isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
+              }`}>
+                {calculateNetAmount() >= 0 ? 'Profit Made' : 'Investment Active'}
+              </span>
             </div>
           </div>
 

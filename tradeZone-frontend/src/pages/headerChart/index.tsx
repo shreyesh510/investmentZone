@@ -12,7 +12,7 @@ const HeaderChart = memo(function HeaderChart() {
   const { settings } = useSettings();
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>(() => {
     const saved = localStorage.getItem('selectedSymbols');
-    return saved ? JSON.parse(saved) : ['BTCUSD', 'ETHUSD'];
+    return saved ? JSON.parse(saved) : ['XAUUSD', 'BTCUSD', 'ETHUSD'];
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('15');
@@ -26,7 +26,7 @@ const HeaderChart = memo(function HeaderChart() {
   }, [selectedSymbols]);
 
   // Available symbols for selection
-  const availableSymbols = ['LTCUSD', 'DOGEUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'BNBUSD', 'AVAXUSD', 'XRPUSD', 'ADAUSD', 'FLOKIUSD', 'ALGOUSD', 'SUIUSD'];
+  const availableSymbols = ['XAUUSD', 'LTCUSD', 'DOGEUSD', 'BTCUSD', 'ETHUSD', 'SOLUSD', 'BNBUSD', 'AVAXUSD', 'XRPUSD', 'ADAUSD', 'FLOKIUSD', 'ALGOUSD', 'SUIUSD'];
 
   // Available timeframes
   const timeframes = [
@@ -63,7 +63,7 @@ const HeaderChart = memo(function HeaderChart() {
               Market Overview
             </h1>
             <p className={`text-xs md:text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Real-time cryptocurrency prices and 24h changes
+              Real-time cryptocurrency and commodity prices (Gold, Bitcoin, Ethereum, etc.)
             </p>
           </div>
 

@@ -7,7 +7,7 @@ async function bootstrap() {
 
   // Get allowed origins from environment variable or use defaults
   const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
     : [
         'http://localhost:5173',
         'http://localhost:3000',

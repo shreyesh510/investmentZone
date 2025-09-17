@@ -29,7 +29,9 @@ async function bootstrap() {
   console.log(
     `🚀 Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
   );
-  console.log(`⚠️ WARNING: CORS is configured to allow ALL origins (temporary for debugging)`);
+  console.log(
+    `⚠️ WARNING: CORS is configured to allow ALL origins (temporary for debugging)`,
+  );
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 bootstrap();
