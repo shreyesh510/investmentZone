@@ -1,12 +1,13 @@
 import { memo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import RoundedButton from '../../../components/button/RoundedButton';
+import FinancialSummaryCards from '../../../components/investment/FinancialSummaryCards';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '../../../redux/store';
 import { fetchDashboardSummary } from '../../../redux/thunks/dashboard/dashboardThunks';
-import { 
+import {
   fetchAllDashboardData
 } from '../../../redux/thunks/dashboard/newDashboardThunks';
 import { setTimeframe, selectDashboardDataByTimeframe } from '../../../redux/slices/newDashboardSlice';
@@ -290,6 +291,21 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
         </div>
       </div>
 
+      {/* Financial Summary Section */}
+      <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-8 ${
+        isDarkMode
+          ? 'bg-gray-800/50 border-gray-700/50 shadow-xl'
+          : 'bg-white/80 border-white/50 shadow-xl'
+      }`}>
+        <h2 className="text-lg font-semibold mb-6 flex items-center">
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3">
+            💰
+          </span>
+          Financial Overview
+        </h2>
+        <FinancialSummaryCards isDarkMode={isDarkMode} />
+      </div>
+
       {/* Portfolio Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Portfolio Value */}
@@ -333,7 +349,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             </div>
           </div>
           <p className="text-3xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text">
-            {formatCurrency(dashboardData?.positions?.totalInvested || 0)}
+            {formatCurrency(dashboardData?.positions?.totalInvested || 0, 'INR')}
           </p>
         </div>
 
@@ -359,7 +375,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <p className={`text-3xl font-bold ${
             (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {formatCurrency(dashboardData?.positions?.totalPnL || 0)}
+            {formatCurrency(dashboardData?.positions?.totalPnL || 0, 'INR')}
           </p>
           <p className={`text-sm mt-1 ${
             (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
@@ -389,7 +405,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <p className={`text-3xl font-bold ${
             (dashboardData?.tradePnL?.total?.netPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {formatCurrency(dashboardData?.tradePnL?.total?.netPnL || 0)}
+            {formatCurrency(dashboardData?.tradePnL?.total?.netPnL || 0, 'INR')}
           </p>
           <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             {dashboardData?.tradePnL?.total?.trades || 0} total trades
@@ -659,7 +675,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
               <p className={`text-lg font-bold ${
                 dashboardData.tradePnL.statistics.netPnL >= 0 ? 'text-green-400' : 'text-red-400'
               }`}>
-                {formatCurrency(dashboardData.tradePnL.statistics.netPnL)}
+                {formatCurrency(dashboardData.tradePnL.statistics.netPnL, 'INR')}
               </p>
             </div>
             <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
@@ -810,7 +826,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                               fill="transparent"
                               className="hover:fill-green-400/20 cursor-pointer"
                             >
-                              <title>{`${point.dateStr}: ${formatCurrency(point.netPnL)}`}</title>
+                              <title>{`${point.dateStr}: ${formatCurrency(point.netPnL, 'INR')}`}</title>
                             </circle>
                           </g>
                         );
@@ -893,7 +909,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <div className="mt-4">
             <div className="text-center">
               <span className="text-sm font-medium">
-                Win Rate: {dashboardData.tradePnL.statistics.winRate}, Avg Daily: {formatCurrency(Number(dashboardData.tradePnL.statistics.averageDailyPnL))}
+                Win Rate: {dashboardData.tradePnL.statistics.winRate}, Avg Daily: {formatCurrency(Number(dashboardData.tradePnL.statistics.averageDailyPnL), 'INR')}
               </span>
             </div>
           </div>

@@ -72,31 +72,31 @@ const Settings: React.FC = () => {
   // Settings content component
   function renderSettingsContent() {
   return (
-      <div className={`h-full flex flex-col overflow-hidden ${settings.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className={`h-full min-h-screen flex flex-col ${settings.theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'} touch-auto`}>
       {/* Modern Header with Gradient */}
       <div className={`${settings.theme === 'dark' 
         ? 'bg-gradient-to-r from-gray-800 via-gray-800 to-gray-700 border-gray-700' 
         : 'bg-gradient-to-r from-white via-blue-50 to-indigo-50 border-gray-200'
       } border-b shadow-sm`}>
-        <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <button
               onClick={goBack}
-              className={`p-3 rounded-full transition-all duration-200 ${
-                settings.theme === 'dark' 
-                  ? 'text-gray-400 hover:text-white hover:bg-gray-700 hover:scale-110' 
+              className={`p-2 sm:p-3 rounded-full transition-all duration-200 ${
+                settings.theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700 hover:scale-110'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-blue-100 hover:scale-110'
               }`}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className={`text-3xl font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <h1 className={`text-2xl sm:text-3xl font-bold ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               Settings
             </h1>
-              <p className={`text-sm ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-xs sm:text-sm ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} hidden sm:block`}>
                 Manage your account and preferences
               </p>
             </div>
@@ -106,16 +106,16 @@ const Settings: React.FC = () => {
             {/* Modern Save Button */}
             <button
               onClick={handleSave}
-              className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-1 sm:space-x-2 ${
                 settings.theme === 'dark'
                   ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/25'
                   : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-blue-500/25'
               } transform hover:scale-105`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <span>Save Changes</span>
+              <span className="text-sm sm:text-base">Save</span>
             </button>
           
             {/* Animated Success Notification */}
@@ -136,9 +136,9 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="flex-1 overflow-y-auto overscroll-contain pb-safe" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Profile Section */}
           <div className={`col-span-1 lg:col-span-2 xl:col-span-1 ${
@@ -487,13 +487,16 @@ const Settings: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile safe area padding for bottom content */}
+        <div className="h-24 sm:h-12 flex-shrink-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}></div>
         </div>
       </div>
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className={`${settings.theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-md mx-4`}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className={`${settings.theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 sm:p-6 w-full max-w-md`}>
             <h3 className={`text-lg font-semibold mb-4 ${settings.theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
               Reset Settings
             </h3>

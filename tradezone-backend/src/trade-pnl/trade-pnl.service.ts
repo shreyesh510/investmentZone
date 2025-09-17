@@ -73,7 +73,7 @@ export class TradePnLService {
     userId: string,
     days?: number,
     page: number = 1,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<{
     data: TradePnL[];
     pagination: {
@@ -99,8 +99,14 @@ export class TradePnLService {
     const allFilteredItems = await this.findAll(userId, days);
 
     // Calculate statistics from all filtered items
-    const totalProfit = allFilteredItems.reduce((sum, item) => sum + item.profit, 0);
-    const totalLoss = allFilteredItems.reduce((sum, item) => sum + item.loss, 0);
+    const totalProfit = allFilteredItems.reduce(
+      (sum, item) => sum + item.profit,
+      0,
+    );
+    const totalLoss = allFilteredItems.reduce(
+      (sum, item) => sum + item.loss,
+      0,
+    );
     const netPnL = allFilteredItems.reduce((sum, item) => sum + item.netPnL, 0);
     const totalTrades = allFilteredItems.reduce(
       (sum, item) => sum + (item.totalTrades || 0),
@@ -128,7 +134,9 @@ export class TradePnLService {
           ? ((winningTrades / totalTrades) * 100).toFixed(2) + '%'
           : '0%',
       averageDailyPnL:
-        allFilteredItems.length > 0 ? (netPnL / allFilteredItems.length).toFixed(2) : '0',
+        allFilteredItems.length > 0
+          ? (netPnL / allFilteredItems.length).toFixed(2)
+          : '0',
       daysTraded: allFilteredItems.length,
     };
 

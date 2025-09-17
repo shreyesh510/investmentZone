@@ -50,4 +50,10 @@ export class DashboardController {
     const userId = req.user.userId;
     return await this.dashboardService.getTransactionsData(userId, timeframe);
   }
+
+  @Get('financial-summary')
+  async getFinancialSummary(@Request() req: any) {
+    const userId = req.user.userId;
+    return await this.dashboardService.getFinancialSummary(userId);
+  }
 }

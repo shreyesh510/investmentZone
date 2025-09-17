@@ -69,7 +69,10 @@ export interface DashboardSummary {
 
 @Injectable()
 export class DashboardService {
-  private getDateRangeFromTimeframe(timeframe: string): { startDate: Date; endDate: Date } {
+  private getDateRangeFromTimeframe(timeframe: string): {
+    startDate: Date;
+    endDate: Date;
+  } {
     const endDate = new Date();
     let startDate = new Date();
 
@@ -102,14 +105,18 @@ export class DashboardService {
     return { startDate, endDate };
   }
 
-  private filterByDateRange<T extends { createdAt?: any; requestedAt?: any; date?: any; timestamp?: any }>(
-    data: T[],
-    startDate: Date,
-    endDate: Date,
-  ): T[] {
+  private filterByDateRange<
+    T extends {
+      createdAt?: any;
+      requestedAt?: any;
+      date?: any;
+      timestamp?: any;
+    },
+  >(data: T[], startDate: Date, endDate: Date): T[] {
     return data.filter((item) => {
       // Try different date fields
-      const dateValue = item.createdAt || item.requestedAt || item.date || item.timestamp;
+      const dateValue =
+        item.createdAt || item.requestedAt || item.date || item.timestamp;
       if (!dateValue) return false;
 
       const itemDate = new Date(dateValue);
@@ -377,7 +384,10 @@ export class DashboardService {
     return { weekly, monthly, yearly };
   }
 
-  private processChartDataWithDaily(allTradePnL: any[], timeframe: string): {
+  private processChartDataWithDaily(
+    allTradePnL: any[],
+    timeframe: string,
+  ): {
     daily?: any[];
     weekly: any[];
     monthly: any[];
@@ -906,7 +916,8 @@ export class DashboardService {
       );
 
       // Generate chart data for ALL timeframes at once
-      const chartData = this.generatePositionsChartDataAllTimeframes(safeAllPositions);
+      const chartData =
+        this.generatePositionsChartDataAllTimeframes(safeAllPositions);
 
       return {
         summary: {
@@ -1014,7 +1025,8 @@ export class DashboardService {
         tradePnLStats.status === 'fulfilled' ? tradePnLStats.value : null;
 
       // Calculate totals for all timeframes
-      const allTimeframeTotals = this.calculateTradePnLByTimeframes(safeAllTradePnL);
+      const allTimeframeTotals =
+        this.calculateTradePnLByTimeframes(safeAllTradePnL);
 
       // Process chart data with all timeframes included
       const chartData = this.processChartDataWithDaily(safeAllTradePnL, 'ALL');
@@ -1051,11 +1063,14 @@ export class DashboardService {
         withdrawals.status === 'fulfilled' ? withdrawals.value : [];
 
       // Calculate totals for all timeframes
-      const depositsByTimeframe = this.calculateTransactionsByTimeframes(safeDeposits);
-      const withdrawalsByTimeframe = this.calculateTransactionsByTimeframes(safeWithdrawals);
+      const depositsByTimeframe =
+        this.calculateTransactionsByTimeframes(safeDeposits);
+      const withdrawalsByTimeframe =
+        this.calculateTransactionsByTimeframes(safeWithdrawals);
 
       // Process chart data for all timeframes
-      const withdrawalChartData = this.processWithdrawalChartData(safeWithdrawals);
+      const withdrawalChartData =
+        this.processWithdrawalChartData(safeWithdrawals);
       const depositChartData = this.processDepositChartData(safeDeposits);
 
       // Get recent activities
@@ -1246,7 +1261,9 @@ export class DashboardService {
       dayData.count += 1;
     });
 
-    return Array.from(dayMap.values()).sort((a, b) => a.period.localeCompare(b.period));
+    return Array.from(dayMap.values()).sort((a, b) =>
+      a.period.localeCompare(b.period),
+    );
   }
 
   private aggregatePositionsByWeek(positions: any[]): any[] {
@@ -1275,7 +1292,9 @@ export class DashboardService {
       weekData.count += 1;
     });
 
-    return Array.from(weekMap.values()).sort((a, b) => a.period.localeCompare(b.period));
+    return Array.from(weekMap.values()).sort((a, b) =>
+      a.period.localeCompare(b.period),
+    );
   }
 
   private aggregatePositionsByMonth(positions: any[]): any[] {
@@ -1304,7 +1323,9 @@ export class DashboardService {
       monthData.count += 1;
     });
 
-    return Array.from(monthMap.values()).sort((a, b) => a.period.localeCompare(b.period));
+    return Array.from(monthMap.values()).sort((a, b) =>
+      a.period.localeCompare(b.period),
+    );
   }
 
   private aggregatePositionsByYear(positions: any[]): any[] {
@@ -1333,14 +1354,16 @@ export class DashboardService {
       yearData.count += 1;
     });
 
-    return Array.from(yearMap.values()).sort((a, b) => a.period.localeCompare(b.period));
+    return Array.from(yearMap.values()).sort((a, b) =>
+      a.period.localeCompare(b.period),
+    );
   }
 
   private calculateTradePnLByTimeframes(tradePnL: any[]) {
     const timeframes = ['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
     const result: any = {};
 
-    timeframes.forEach(timeframe => {
+    timeframes.forEach((timeframe) => {
       const { startDate, endDate } = this.getDateRangeFromTimeframe(timeframe);
       const filtered = this.filterByDateRange(tradePnL, startDate, endDate);
 
@@ -1359,18 +1382,69 @@ export class DashboardService {
     const timeframes = ['1D', '1W', '1M', '3M', '6M', '1Y', 'ALL'];
     const result: any = {};
 
-    timeframes.forEach(timeframe => {
+    timeframes.forEach((timeframe) => {
       const { startDate, endDate } = this.getDateRangeFromTimeframe(timeframe);
       const filtered = this.filterByDateRange(transactions, startDate, endDate);
 
       result[timeframe] = {
         total: filtered.reduce((sum, item) => sum + (item.amount || 0), 0),
-        pending: filtered.filter(item => item.status === 'pending').length,
-        completed: filtered.filter(item => item.status === 'completed').length,
+        pending: filtered.filter((item) => item.status === 'pending').length,
+        completed: filtered.filter((item) => item.status === 'completed')
+          .length,
         count: filtered.length,
       };
     });
 
     return result;
+  }
+
+  async getFinancialSummary(userId: string) {
+    try {
+      const [deposits, withdrawals, tradePnLData] = await Promise.allSettled([
+        this.depositsService.list(userId),
+        this.withdrawalsService.list(userId),
+        this.tradePnLService.getStatistics(userId, 3650), // Get all-time stats
+      ]);
+
+      const safeDeposits =
+        deposits.status === 'fulfilled' ? deposits.value : [];
+      const safeWithdrawals =
+        withdrawals.status === 'fulfilled' ? withdrawals.value : [];
+      const safeTradePnLData =
+        tradePnLData.status === 'fulfilled' ? tradePnLData.value : null;
+
+      // Calculate total deposits (all transactions)
+      const totalDeposits = safeDeposits.reduce((sum, deposit) => sum + (deposit.amount || 0), 0);
+
+      // Calculate total withdrawals (all transactions)
+      const totalWithdrawals = safeWithdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
+
+
+      // Calculate total profit and loss from trade PnL
+      const totalProfit = safeTradePnLData?.totalProfit || 0;
+      const totalLoss = safeTradePnLData?.totalLoss || 0;
+
+      // Calculate net profit (total profit - total loss)
+      const totalNetProfit = totalProfit - Math.abs(totalLoss);
+
+      return {
+        totalDeposits,
+        totalWithdrawals,
+        totalProfit,
+        totalLoss: Math.abs(totalLoss), // Return as positive number for display
+        totalNetProfit,
+        netCashFlow: totalDeposits - totalWithdrawals, // Additional useful metric
+      };
+    } catch (error) {
+      console.error('Error in getFinancialSummary:', error);
+      return {
+        totalDeposits: 0,
+        totalWithdrawals: 0,
+        totalProfit: 0,
+        totalLoss: 0,
+        totalNetProfit: 0,
+        netCashFlow: 0,
+      };
+    }
   }
 }
