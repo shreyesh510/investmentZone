@@ -4,7 +4,7 @@ import { marketContextService } from '../../../services/marketContext';
 // Types for OpenAI API
 export interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | Array<{ type: 'text' | 'image_url'; text?: string; image_url?: { url: string } }>;
 }
 
 export interface OpenAIRequest {
@@ -13,6 +13,8 @@ export interface OpenAIRequest {
   maxTokens?: number;
   temperature?: number;
   includeMarketContext?: boolean;
+  imageBase64?: string;
+  conversationHistory?: OpenAIMessage[];
 }
 
 export interface OpenAIResponse {
@@ -23,6 +25,9 @@ export interface OpenAIResponse {
     total_tokens: number;
   };
 }
+
+// Available vision models to try
+const VISION_MODELS = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-vision-preview'];
 
 // OpenAI API service
 const openAIService = {
@@ -64,11 +69,70 @@ Provide helpful, accurate responses based on the current market context. When di
       role: 'system',
       content: systemMessage
     });
+
+    // Add conversation history if provided
+    if (request.conversationHistory && request.conversationHistory.length > 0) {
+      // Add the last few messages for context (limit to prevent token overflow)
+      const recentHistory = request.conversationHistory.slice(-6); // Last 6 messages (3 exchanges)
+      messages.push(...recentHistory);
+    }
     
-    // Add user prompt
-    messages.push({
-      role: 'user',
-      content: request.prompt
+    // Add user prompt with image if provided
+    if (request.imageBase64) {
+      // Ensure the image has the proper data URL format
+      let imageUrl = request.imageBase64;
+      if (!imageUrl.startsWith('data:')) {
+        // If it's raw base64, add the data URL prefix
+        imageUrl = `data:image/jpeg;base64,${imageUrl}`;
+      }
+
+      console.log('🖼️ Sending image to OpenAI Vision API');
+      console.log('Image URL prefix:', imageUrl.substring(0, 50));
+      console.log('Full message structure:', JSON.stringify({
+        role: 'user',
+        content: [
+          { type: 'text', text: request.prompt },
+          { type: 'image_url', image_url: { url: imageUrl.substring(0, 50) + '...' } }
+        ]
+      }, null, 2));
+
+      messages.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: request.prompt
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: imageUrl
+            }
+          }
+        ]
+      });
+    } else {
+      messages.push({
+        role: 'user',
+        content: request.prompt
+      });
+    }
+
+    const requestBody = {
+      model: request.imageBase64 ? 'gpt-4o' : 'gpt-3.5-turbo', // Use GPT-4o Vision for images
+      messages,
+      max_tokens: request.imageBase64 ? (request.maxTokens || 1500) : (request.maxTokens || 1000), // More tokens for image analysis
+      temperature: request.temperature || 0.7,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    };
+
+    console.log('📤 OpenAI API Request:', {
+      model: requestBody.model,
+      hasImage: !!request.imageBase64,
+      messageCount: messages.length,
+      maxTokens: requestBody.max_tokens
     });
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -77,21 +141,26 @@ Provide helpful, accurate responses based on the current market context. When di
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // You can change this to gpt-4 if needed
-        messages,
-        max_tokens: request.maxTokens || 1000,
-        temperature: request.temperature || 0.7,
-        top_p: 1,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('❌ OpenAI API Error:', errorData);
+
+      // Check for specific vision-related errors
+      if (errorData.error?.message?.includes('vision') ||
+          errorData.error?.message?.includes('image') ||
+          errorData.error?.message?.includes('gpt-4o') ||
+          errorData.error?.code === 'model_not_found') {
+        throw new Error(
+          'Image analysis failed. Your OpenAI API key may not have access to GPT-4o Vision model, or you may have insufficient credits. Error: ' +
+          errorData.error?.message
+        );
+      }
+
       throw new Error(
-        errorData.error?.message || 
+        errorData.error?.message ||
         `OpenAI API error: ${response.status} ${response.statusText}`
       );
     }
