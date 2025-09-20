@@ -8,4 +8,5 @@ export interface Message {
   createdAt: Date;
   updatedAt?: Date;
   messageType: 'text' | 'image' | 'file' | 'system';
+  imageUrl?: string;
 }

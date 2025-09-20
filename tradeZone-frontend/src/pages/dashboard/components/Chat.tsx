@@ -38,6 +38,12 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
   const [showSymbolDropdown, setShowSymbolDropdown] = useState<boolean>(false);
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentlySpeaking, setCurrentlySpeaking] = useState<string | null>(null);
+  const [aiConversationHistory, setAiConversationHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -95,12 +101,79 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
     setSelectedTimeframe(settings.defaultTimeframe);
   }, [settings.defaultTimeframe]);
 
-  // Cleanup market context service on unmount
+  // Cleanup market context service and speech synthesis on unmount
   useEffect(() => {
     return () => {
       marketContextService.cleanup();
+      // Stop any ongoing speech
+      if (speechSynthesisRef.current) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
+
+  // Text-to-speech functionality
+  const handleSpeak = useCallback((text: string, messageId: string) => {
+    // Stop any current speech
+    window.speechSynthesis.cancel();
+
+    if (currentlySpeaking === messageId) {
+      // If this message is currently being spoken, stop it
+      setCurrentlySpeaking(null);
+      return;
+    }
+
+    // Create new speech synthesis utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesisRef.current = utterance;
+
+    // Configure voice settings
+    utterance.rate = 0.9; // Slightly slower for better comprehension
+    utterance.pitch = 1;
+    utterance.volume = 0.8;
+
+    // Set voice (prefer female English voices)
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(voice =>
+      voice.lang.startsWith('en') &&
+      (voice.name.toLowerCase().includes('female') ||
+       voice.name.toLowerCase().includes('zira') ||
+       voice.name.toLowerCase().includes('aria') ||
+       voice.name.toLowerCase().includes('eva') ||
+       voice.name.toLowerCase().includes('samantha'))
+    );
+
+    const englishVoice = femaleVoice ||
+      voices.find(voice => voice.lang.startsWith('en') && voice.name.includes('Microsoft')) ||
+      voices.find(voice => voice.lang.startsWith('en'));
+
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    // Handle speech events
+    utterance.onstart = () => {
+      setCurrentlySpeaking(messageId);
+    };
+
+    utterance.onend = () => {
+      setCurrentlySpeaking(null);
+      speechSynthesisRef.current = null;
+    };
+
+    utterance.onerror = () => {
+      setCurrentlySpeaking(null);
+      speechSynthesisRef.current = null;
+      addToast({
+        type: 'error',
+        message: 'Failed to play speech. Please try again.',
+        senderName: 'System',
+      });
+    };
+
+    // Start speaking
+    window.speechSynthesis.speak(utterance);
+  }, [currentlySpeaking, addToast]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -288,31 +361,107 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
     setOnlineUsers(globalOnlineUsers);
   }, [globalOnlineUsers, setOnlineUsers]);
 
+  // Handle paste event for images
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    // Only handle paste in AI mode
+    if (!aiMode) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      // Check if the pasted item is an image
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior
+
+        const blob = item.getAsFile();
+        if (blob) {
+          // Convert blob to base64
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            setSelectedImage(base64);
+            setImagePreview(base64);
+
+            // Show toast notification
+            addToast({
+              type: 'success',
+              message: '📷 Chart image pasted successfully!',
+              senderName: 'System',
+            });
+          };
+          reader.readAsDataURL(blob);
+        }
+        break; // Only handle the first image
+      }
+    }
+  }, [aiMode, addToast]);
+
+  // Add paste event listener
+  useEffect(() => {
+    const handlePasteEvent = (e: ClipboardEvent) => handlePaste(e);
+
+    if (aiMode) {
+      document.addEventListener('paste', handlePasteEvent);
+    }
+
+    return () => {
+      document.removeEventListener('paste', handlePasteEvent);
+    };
+  }, [aiMode, handlePaste]);
+
   const sendAIMessage = useCallback(async () => {
-    if (!newMessage.trim() || !user) return;
+    if ((!newMessage.trim() && !selectedImage) || !user) return;
 
     const userMessage: Message = {
       id: `ai-user-${Date.now()}`,
-      content: newMessage,
+      content: newMessage || 'Chart Analysis Request',
       senderId: user.id,
       senderName: user.name,
       createdAt: new Date(),
       messageType: 'text',
+      imageUrl: selectedImage || undefined,
     };
 
     // Add user message to chat immediately
     setMessages(prev => [...prev, userMessage]);
+
+    // Build conversation history for context
+    const conversationHistory = aiConversationHistory.map(msg => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content
+    }));
     
-    const prompt = newMessage;
+    let prompt = newMessage;
+
+    // If there's an image, use user's message or empty prompt
+    if (selectedImage) {
+      prompt = newMessage || 'Analyze this chart image.';
+    }
+
     setNewMessage('');
+    setSelectedImage(null);
+    setImagePreview(null);
     setIsTyping(false);
 
     try {
-      // Dispatch OpenAI API call with market context
-      const result = await dispatch(generateOpenAIResponse({ 
+      // Log for debugging
+      if (selectedImage) {
+        console.log('🖼️ Sending chart image for analysis');
+        console.log('Image data URL prefix:', selectedImage.substring(0, 30));
+      }
+
+      // Dispatch OpenAI API call with market context and image if provided
+      const result = await dispatch(generateOpenAIResponse({
         prompt,
-        systemMessage: "You are a helpful AI assistant in a cryptocurrency trading chat. Provide concise, helpful responses about trading, market analysis, or general questions. Keep responses under 150 words.",
-        includeMarketContext: true // Include current chart context
+        systemMessage: selectedImage
+          ? "You are an expert cryptocurrency chart analyst with deep knowledge of technical analysis. Analyze the provided chart image carefully and provide detailed insights about: 1) Current price action and trend direction, 2) Key support and resistance levels visible on the chart, 3) Any chart patterns (triangles, flags, head and shoulders, etc.), 4) Technical indicators if visible (moving averages, RSI, MACD, etc.), 5) Volume analysis if available, 6) Potential entry and exit points for trades. Be specific about what you observe in the actual chart image. Remember previous conversation context when responding."
+          : "You are a helpful AI assistant in a cryptocurrency trading chat. Provide concise, helpful responses about trading, market analysis, or general questions. Remember the conversation context and refer to previous messages when relevant.",
+        includeMarketContext: !selectedImage, // Only include market context if no image (to avoid confusion)
+        imageBase64: selectedImage || undefined,
+        conversationHistory: conversationHistory
       }));
 
       if (generateOpenAIResponse.fulfilled.match(result)) {
@@ -325,8 +474,15 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
           createdAt: new Date(),
           messageType: 'text',
         };
-        
+
         setMessages(prev => [...prev, aiMessage]);
+
+        // Update conversation history
+        setAiConversationHistory(prev => [
+          ...prev,
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: result.payload.message }
+        ].slice(-10)); // Keep last 10 messages (5 exchanges)
       } else if (generateOpenAIResponse.rejected.match(result)) {
         // Handle error
         const errorMessage: Message = {
@@ -353,7 +509,7 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
       
       setMessages(prev => [...prev, errorMessage]);
     }
-  }, [newMessage, user, dispatch]);
+  }, [newMessage, user, dispatch, selectedImage]);
 
   const sendMessage = useCallback(() => {
     // If AI mode is on, send to OpenAI instead of chat
@@ -596,12 +752,49 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
                  {message.messageType !== 'system' && (
                    <div className="text-xs font-medium mb-1">{message.senderName}</div>
                  )}
+                 {message.imageUrl && (
+                   <div className="mb-2">
+                     <img
+                       src={message.imageUrl}
+                       alt="Chart"
+                       className="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                       onClick={() => {
+                         // Open image in modal or new tab
+                         window.open(message.imageUrl, '_blank');
+                       }}
+                     />
+                   </div>
+                 )}
                  <div className="text-sm">{message.content}</div>
                  <div className="flex items-center justify-between text-xs opacity-75 mt-1">
                     <span>{formatTime(message.createdAt)}</span>
-                    {message.id.startsWith('temp-') && (
-                      <span className="ml-2 text-yellow-300">Sending...</span>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {/* Text-to-Speech button for AI messages */}
+                      {message.senderId === 'ai-assistant' && (
+                        <button
+                          onClick={() => handleSpeak(message.content, message.id)}
+                          className={`p-1 rounded transition-colors ${
+                            currentlySpeaking === message.id
+                              ? 'text-green-400 hover:text-green-300'
+                              : 'text-gray-400 hover:text-white'
+                          }`}
+                          title={currentlySpeaking === message.id ? 'Stop reading' : 'Read aloud'}
+                        >
+                          {currentlySpeaking === message.id ? (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                      {message.id.startsWith('temp-') && (
+                        <span className="ml-2 text-yellow-300">Sending...</span>
+                      )}
+                    </div>
                   </div>
                </div>
              </div>
@@ -738,6 +931,20 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
                   <h4 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>
                     AI Configuration
                   </h4>
+
+                  {/* Quick tips for AI mode */}
+                  <div className={`mb-3 p-2 rounded text-xs ${isDarkMode ? 'bg-gray-800 border border-gray-600' : 'bg-purple-50 border border-purple-200'}`}>
+                    <div className="space-y-1">
+                      <div className="flex items-start">
+                        <span className="mr-1">📋</span>
+                        <span>Paste charts directly with <kbd className="px-1 py-0.5 rounded bg-gray-700 text-white">Ctrl+V</kbd></span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="mr-1">📷</span>
+                        <span>Or click the image button to upload</span>
+                      </div>
+                    </div>
+                  </div>
                   
                   {/* Trading Pair Selection */}
                   <div className="space-y-3">
@@ -859,6 +1066,41 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
         </div>
       )}
 
+      {/* Image Preview */}
+      {imagePreview && (
+        <div className={`px-4 pt-2 pb-1 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+          <div className="flex items-start space-x-2">
+            <div className="relative inline-block">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-h-32 rounded-lg border border-gray-600"
+              />
+              <button
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
+                }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1">
+              <div className={`text-xs font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                ✅ Chart ready for analysis
+              </div>
+              <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Add a message or press Enter to analyze
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className={`p-4 border-t relative ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         {/* Emoji Picker */}
@@ -954,6 +1196,26 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
           </div>
         )}
         
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setSelectedImage(base64);
+                setImagePreview(base64);
+              };
+              reader.readAsDataURL(file);
+            }
+          }}
+        />
+
         <div className="flex space-x-2">
           <button
             onClick={toggleEmojiPicker}
@@ -962,15 +1224,30 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
           >
             😊
           </button>
+
+          {/* Image upload button - only show in AI mode */}
+          {aiMode && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={`p-2 transition-colors duration-200 ${selectedImage ? 'text-green-400' : isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+              title="Attach chart screenshot"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+          )}
           <input
             type="text"
             value={newMessage}
             onChange={handleTyping}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder={aiMode ? "Ask AI anything..." : "Type your message..."}
+            placeholder={aiMode ? (selectedImage ? "Ask about this chart or press Enter..." : "Ask AI anything or paste a chart (Ctrl+V)...") : "Type your message..."}
             className={`flex-1 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 text-sm ${
-              aiMode 
-                ? `bg-purple-700 text-white focus:ring-purple-500 border border-purple-600` 
+              aiMode
+                ? `bg-purple-700 text-white focus:ring-purple-500 border border-purple-600 ${
+                    selectedImage ? 'border-green-400' : ''
+                  }`
                 : isDarkMode
                   ? 'bg-gray-700 text-white focus:ring-blue-500'
                   : 'bg-gray-100 text-gray-900 focus:ring-blue-500 border border-gray-300'
@@ -978,7 +1255,7 @@ const Chat = ({ onlineUsers, setOnlineUsers }: ChatProps) => {
           />
           <button
             onClick={sendMessage}
-            disabled={!newMessage.trim() || (aiMode && aiLoading)}
+            disabled={(!newMessage.trim() && !selectedImage) || (aiMode && aiLoading)}
             className={`px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
               aiMode
                 ? 'bg-purple-600 text-white hover:bg-purple-700'
