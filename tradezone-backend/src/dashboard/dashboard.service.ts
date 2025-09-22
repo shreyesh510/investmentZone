@@ -1414,11 +1414,16 @@ export class DashboardService {
         tradePnLData.status === 'fulfilled' ? tradePnLData.value : null;
 
       // Calculate total deposits (all transactions)
-      const totalDeposits = safeDeposits.reduce((sum, deposit) => sum + (deposit.amount || 0), 0);
+      const totalDeposits = safeDeposits.reduce(
+        (sum, deposit) => sum + (deposit.amount || 0),
+        0,
+      );
 
       // Calculate total withdrawals (all transactions)
-      const totalWithdrawals = safeWithdrawals.reduce((sum, withdrawal) => sum + (withdrawal.amount || 0), 0);
-
+      const totalWithdrawals = safeWithdrawals.reduce(
+        (sum, withdrawal) => sum + (withdrawal.amount || 0),
+        0,
+      );
 
       // Calculate total profit and loss from trade PnL
       const totalProfit = safeTradePnLData?.totalProfit || 0;
@@ -1454,7 +1459,7 @@ export class DashboardService {
       const tradePnLRecords = await this.tradePnLService.findAll(userId);
 
       // Filter records for the specified year
-      const yearRecords = tradePnLRecords.filter(record => {
+      const yearRecords = tradePnLRecords.filter((record) => {
         const recordDate = new Date(record.date);
         return recordDate.getFullYear() === year;
       });
@@ -1462,7 +1467,7 @@ export class DashboardService {
       // Create a map of date -> PnL for quick lookup
       const pnlByDate = new Map<string, number>();
 
-      yearRecords.forEach(record => {
+      yearRecords.forEach((record) => {
         const dateKey = record.date.split('T')[0]; // Get YYYY-MM-DD format
         const existingPnL = pnlByDate.get(dateKey) || 0;
         pnlByDate.set(dateKey, existingPnL + record.netPnL);
@@ -1470,13 +1475,25 @@ export class DashboardService {
 
       // Generate all days of the year
       // For 2025, start from September 13, otherwise start from January 1st
-      const startDate = year === 2025
-        ? new Date(2025, 8, 13) // September 13, 2025 (month is 0-indexed)
-        : new Date(year, 0, 1); // January 1st
+      const startDate =
+        year === 2025
+          ? new Date(2025, 8, 13) // September 13, 2025 (month is 0-indexed)
+          : new Date(year, 0, 1); // January 1st
       const endDate = new Date(year, 11, 31); // December 31st
-      const progressData = [];
+      const progressData: Array<{
+        date: string;
+        pnl: number;
+        dayOfWeek: number;
+        week: number;
+        month: number;
+        hasData: boolean;
+      }> = [];
 
-      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      for (
+        let d = new Date(startDate);
+        d <= endDate;
+        d.setDate(d.getDate() + 1)
+      ) {
         const dateKey = d.toISOString().split('T')[0];
         const pnl = pnlByDate.get(dateKey) || 0;
 
@@ -1486,18 +1503,18 @@ export class DashboardService {
           dayOfWeek: d.getDay(), // 0 = Sunday, 6 = Saturday
           week: Math.ceil((d.getDate() - d.getDay()) / 7),
           month: d.getMonth(),
-          hasData: pnlByDate.has(dateKey)
+          hasData: pnlByDate.has(dateKey),
         });
       }
 
       // Calculate summary statistics
       const totalDays = progressData.length;
-      const tradingDays = progressData.filter(d => d.hasData).length;
-      const profitDays = progressData.filter(d => d.pnl > 0).length;
-      const lossDays = progressData.filter(d => d.pnl < 0).length;
+      const tradingDays = progressData.filter((d) => d.hasData).length;
+      const profitDays = progressData.filter((d) => d.pnl > 0).length;
+      const lossDays = progressData.filter((d) => d.pnl < 0).length;
       const totalPnL = progressData.reduce((sum, d) => sum + d.pnl, 0);
-      const maxPnL = Math.max(...progressData.map(d => d.pnl));
-      const minPnL = Math.min(...progressData.map(d => d.pnl));
+      const maxPnL = Math.max(...progressData.map((d) => d.pnl));
+      const minPnL = Math.min(...progressData.map((d) => d.pnl));
 
       return {
         year,
@@ -1510,8 +1527,11 @@ export class DashboardService {
           totalPnL,
           maxPnL,
           minPnL,
-          winRate: tradingDays > 0 ? ((profitDays / tradingDays) * 100).toFixed(1) : '0.0'
-        }
+          winRate:
+            tradingDays > 0
+              ? ((profitDays / tradingDays) * 100).toFixed(1)
+              : '0.0',
+        },
       };
     } catch (error) {
       console.error('Error in getTradePnLProgress:', error);
@@ -1526,8 +1546,8 @@ export class DashboardService {
           totalPnL: 0,
           maxPnL: 0,
           minPnL: 0,
-          winRate: '0.0'
-        }
+          winRate: '0.0',
+        },
       };
     }
   }
