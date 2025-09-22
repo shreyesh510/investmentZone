@@ -11,7 +11,8 @@
       "Bash(taskkill:*)",
       "Bash(find:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

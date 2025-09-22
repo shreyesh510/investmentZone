@@ -13,7 +13,7 @@ export interface AppSettings {
 // Default settings
 const defaultSettings: AppSettings = {
   theme: 'dark',
-  defaultCrypto: 'DOGEUSD',
+  defaultCrypto: 'XAUUSD',
   defaultTimeframe: '5',
   chartStyle: '1', // Candlestick
   notifications: true,
@@ -22,6 +22,7 @@ const defaultSettings: AppSettings = {
 
 // Available options
 export const cryptoOptions = [
+  { value: 'XAUUSD', label: 'Gold / USD', symbol: 'XAU' },
   { value: 'DOGEUSD', label: 'Dogecoin / USD', symbol: 'DOGE' },
   { value: 'BTCUSD', label: 'Bitcoin / USD', symbol: 'BTC' },
   { value: 'ETHUSD', label: 'Ethereum / USD', symbol: 'ETH' },
