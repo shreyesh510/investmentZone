@@ -58,10 +58,7 @@ export class DashboardController {
   }
 
   @Get('trade-pnl-progress')
-  async getTradePnLProgress(
-    @Request() req: any,
-    @Query('year') year?: string,
-  ) {
+  async getTradePnLProgress(@Request() req: any, @Query('year') year?: string) {
     const userId = req.user.userId;
     const targetYear = year ? parseInt(year, 10) : new Date().getFullYear();
     return await this.dashboardService.getTradePnLProgress(userId, targetYear);
