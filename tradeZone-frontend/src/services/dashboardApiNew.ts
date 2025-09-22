@@ -152,4 +152,15 @@ export const newDashboardApi = {
       }
     };
   },
+
+  // Get trade PnL progress data (GitHub-style contribution graph)
+  getTradePnLProgress: async (year?: number): Promise<any> => {
+    const params = new URLSearchParams();
+    if (year) {
+      params.append('year', year.toString());
+    }
+
+    const response = await getAxios.get(`/dashboard/trade-pnl-progress?${params.toString()}`);
+    return response.data;
+  }
 };

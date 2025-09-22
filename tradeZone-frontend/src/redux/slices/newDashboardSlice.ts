@@ -5,6 +5,7 @@ import {
   fetchDashboardWallets,
   fetchDashboardTradePnL,
   fetchDashboardTransactions,
+  fetchTradePnLProgress,
 } from '../thunks/dashboard/newDashboardThunks';
 import type {
   DashboardPositionsResponse,
@@ -13,30 +14,55 @@ import type {
   DashboardTransactionsResponse,
 } from '../../services/dashboardApiNew';
 
+interface TradePnLProgressData {
+  year: number;
+  data: Array<{
+    date: string;
+    pnl: number;
+    dayOfWeek: number;
+    week: number;
+    month: number;
+    hasData: boolean;
+  }>;
+  summary: {
+    totalDays: number;
+    tradingDays: number;
+    profitDays: number;
+    lossDays: number;
+    totalPnL: number;
+    maxPnL: number;
+    minPnL: number;
+    winRate: string;
+  };
+}
+
 interface NewDashboardState {
   positions: DashboardPositionsResponse | null;
   wallets: DashboardWalletsResponse | null;
   tradePnL: DashboardTradePnLResponse | null;
   transactions: DashboardTransactionsResponse | null;
-  
+  tradePnLProgress: TradePnLProgressData | null;
+
   // Loading states for each section
   loading: {
     positions: boolean;
     wallets: boolean;
     tradePnL: boolean;
     transactions: boolean;
+    tradePnLProgress: boolean;
     all: boolean;
   };
-  
+
   // Error states for each section
   errors: {
     positions: string | null;
     wallets: string | null;
     tradePnL: string | null;
     transactions: string | null;
+    tradePnLProgress: string | null;
     all: string | null;
   };
-  
+
   // Current timeframe
   timeframe: string;
   lastUpdated: number | null;
@@ -47,11 +73,13 @@ const initialState: NewDashboardState = {
   wallets: null,
   tradePnL: null,
   transactions: null,
+  tradePnLProgress: null,
   loading: {
     positions: false,
     wallets: false,
     tradePnL: false,
     transactions: false,
+    tradePnLProgress: false,
     all: false,
   },
   errors: {
@@ -59,6 +87,7 @@ const initialState: NewDashboardState = {
     wallets: null,
     tradePnL: null,
     transactions: null,
+    tradePnLProgress: null,
     all: null,
   },
   timeframe: '1M',
@@ -172,6 +201,21 @@ const newDashboardSlice = createSlice({
       .addCase(fetchDashboardTransactions.rejected, (state, action) => {
         state.loading.transactions = false;
         state.errors.transactions = action.payload as string;
+      })
+
+      // Fetch trade PnL progress
+      .addCase(fetchTradePnLProgress.pending, (state) => {
+        state.loading.tradePnLProgress = true;
+        state.errors.tradePnLProgress = null;
+      })
+      .addCase(fetchTradePnLProgress.fulfilled, (state, action: PayloadAction<TradePnLProgressData>) => {
+        state.loading.tradePnLProgress = false;
+        state.tradePnLProgress = action.payload;
+        state.errors.tradePnLProgress = null;
+      })
+      .addCase(fetchTradePnLProgress.rejected, (state, action) => {
+        state.loading.tradePnLProgress = false;
+        state.errors.tradePnLProgress = action.payload as string;
       });
   },
 });

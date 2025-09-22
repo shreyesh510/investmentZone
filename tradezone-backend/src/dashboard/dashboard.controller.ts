@@ -56,4 +56,14 @@ export class DashboardController {
     const userId = req.user.userId;
     return await this.dashboardService.getFinancialSummary(userId);
   }
+
+  @Get('trade-pnl-progress')
+  async getTradePnLProgress(
+    @Request() req: any,
+    @Query('year') year?: string,
+  ) {
+    const userId = req.user.userId;
+    const targetYear = year ? parseInt(year, 10) : new Date().getFullYear();
+    return await this.dashboardService.getTradePnLProgress(userId, targetYear);
+  }
 }

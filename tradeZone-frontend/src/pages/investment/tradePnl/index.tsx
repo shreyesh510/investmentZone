@@ -21,6 +21,7 @@ import EditTradePnLModal from './components/editTradePnLModal';
 import ImportTradePnLModal from './components/importTradePnLModal';
 import ConfirmModal from '../../../components/modal/confirmModal';
 import RoundedButton from '../../../components/button/RoundedButton';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 
 const TradePnL = memo(function TradePnL() {
@@ -38,18 +39,22 @@ const TradePnL = memo(function TradePnL() {
   
   // Filter states
   const [filters, setFilters] = useState({
-    period: '7', // days for statistics - default 7 days
-    dataFilter: '7' // days for data filtering - default 7 days
+    period: '', // days for statistics - default All
+    dataFilter: '', // days for data filtering - default All
+    dateFilterType: 'preset', // 'preset' or 'custom'
+    startDate: '',
+    endDate: ''
   });
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage] = useState<number>(10);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(1000);
 
   // Redux state
   const { items, statistics, pagination, loading, creating, updating, deleting, error } = useSelector(
     (state: RootState) => state.tradePnL
   );
+
 
   const withdrawals = useSelector((state: RootState) => state.withdrawals.items);
   const deposits = useSelector((state: RootState) => state.deposits.items);
@@ -66,22 +71,24 @@ const TradePnL = memo(function TradePnL() {
 
   // Fetch data on mount and when filters change
   useEffect(() => {
-    const days = parseInt(filters.dataFilter);
+    const effectiveFilter = getEffectiveFilterValue();
+    const days = effectiveFilter ? parseInt(effectiveFilter) : undefined;
     dispatch(fetchTradePnLPaginated({
       days,
       page: currentPage,
       limit: itemsPerPage
     }));
+    dispatch(fetchTradePnLStatistics(days));
     dispatch(fetchWithdrawals());
     dispatch(fetchDeposits());
   }, [dispatch, filters, currentPage, itemsPerPage]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or page size change
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [filters.dataFilter]);
+  }, [filters.dataFilter, filters.dateFilterType, filters.startDate, filters.endDate, itemsPerPage]);
 
 
   // Handler functions
@@ -111,8 +118,32 @@ const TradePnL = memo(function TradePnL() {
   const clearFilters = () => {
     setFilters({
       period: '7',
-      dataFilter: '7'
+      dataFilter: '7',
+      dateFilterType: 'preset',
+      startDate: '',
+      endDate: ''
     });
+  };
+
+  // Calculate days difference for custom date range
+  const calculateDaysFromCustomRange = () => {
+    if (filters.dateFilterType === 'custom' && filters.startDate && filters.endDate) {
+      const start = new Date(filters.startDate);
+      const end = new Date(filters.endDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    }
+    return null;
+  };
+
+  // Get the effective filter value (for API calls)
+  const getEffectiveFilterValue = () => {
+    if (filters.dateFilterType === 'custom') {
+      const customDays = calculateDaysFromCustomRange();
+      return customDays ? customDays.toString() : '';
+    }
+    return filters.dataFilter;
   };
 
   // Calculate totals
@@ -251,7 +282,13 @@ const TradePnL = memo(function TradePnL() {
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Withdrawal & Return Overview ({filters.dataFilter === '' ? 'All Time' : filters.dataFilter === '1' ? 'Today' : `Last ${filters.dataFilter} Days`})
+          Withdrawal & Return Overview ({
+            filters.dateFilterType === 'custom' && filters.startDate && filters.endDate
+              ? `${filters.startDate} to ${filters.endDate}`
+              : filters.dataFilter === '' ? 'All Time'
+              : filters.dataFilter === '1' ? 'Today'
+              : `Last ${filters.dataFilter} Days`
+          })
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -411,44 +448,245 @@ const TradePnL = memo(function TradePnL() {
         </div>
       )}
 
-      {/* Filters */}
+      {/* PnL Chart - Visual Data Representation */}
+      {items && items.length > 0 && (
+        <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
+          isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Daily P&L Trend Analysis
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={(() => {
+                  // Group trades by date and aggregate P&L
+                  const dateMap = new Map<string, { date: string; pnl: number; profit: number; loss: number; fullDate: Date }>();
+
+                  items.forEach(item => {
+                    const date = new Date(item.date);
+                    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                    const pnl = parseFloat(item.netPnL || 0); // Use netPnL instead of profit
+
+                    if (dateMap.has(dateKey)) {
+                      const existing = dateMap.get(dateKey)!;
+                      existing.pnl += pnl;
+                      existing.profit += pnl > 0 ? pnl : 0;
+                      existing.loss += pnl < 0 ? Math.abs(pnl) : 0;
+                    } else {
+                      dateMap.set(dateKey, {
+                        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        pnl: pnl,
+                        profit: pnl > 0 ? pnl : 0,
+                        loss: pnl < 0 ? Math.abs(pnl) : 0,
+                        fullDate: date
+                      });
+                    }
+                  });
+
+                  // Convert to array and sort by date
+                  const aggregatedData = Array.from(dateMap.values())
+                    .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime())
+                    .map(({ fullDate, ...rest }) => rest); // Remove fullDate from final data
+
+                  return aggregatedData;
+                })()}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#E5E7EB'} />
+                <XAxis
+                  dataKey="date"
+                  stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                  fontSize={12}
+                  tickFormatter={(value) => `$${value.toFixed(0)}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}`,
+                    borderRadius: '8px',
+                    color: isDarkMode ? '#FFFFFF' : '#000000'
+                  }}
+                  formatter={(value, name) => [
+                    `$${parseFloat(value).toFixed(2)}`,
+                    name === 'pnl' ? 'P&L' : name
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pnl"
+                  stroke="#8B5CF6"
+                  strokeWidth={3}
+                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: '#8B5CF6' }}
+                  connectNulls={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Chart Legend */}
+          <div className="flex items-center justify-center mt-4 space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Daily P&L Trend
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Filters */}
       <div className={`p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
-        <div className="flex flex-wrap gap-4 items-center">
-          <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Filter Period:
-          </h3>
-          
-          <div className="flex items-center space-x-2">
+        <div className="space-y-4">
+          {/* Date Filter Type Selection */}
+          <div className="flex flex-wrap gap-4 items-center">
+            <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Date Filter:
+            </h3>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="preset"
+                  checked={filters.dateFilterType === 'preset'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Preset Ranges
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="custom"
+                  checked={filters.dateFilterType === 'custom'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Custom Range
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Preset Date Filter */}
+          {filters.dateFilterType === 'preset' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Select Period:
+              </span>
+              <select
+                value={filters.dataFilter}
+                onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                }`}
+              >
+                <option value="">All Time</option>
+                <option value="1">Today</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last 1 Year</option>
+              </select>
+            </div>
+          )}
+
+          {/* Custom Date Range Filter */}
+          {filters.dateFilterType === 'custom' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Custom Range:
+              </span>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>to</span>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+              </div>
+              {filters.startDate && filters.endDate && (
+                <span className={`text-xs px-2 py-1 rounded ${
+                  isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {calculateDaysFromCustomRange()} days
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          <div className="flex flex-wrap gap-4 items-center pt-4 border-t border-gray-700/30">
+            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Items per page:
+            </span>
             <select
-              value={filters.dataFilter}
-              onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
               className={`px-3 py-2 rounded-lg text-sm border ${
-                isDarkMode 
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white' 
+                isDarkMode
+                  ? 'bg-gray-700/50 border-gray-600/50 text-white'
                   : 'bg-white/70 border-gray-300/50 text-gray-900'
               }`}
             >
-              <option value="1">Today</option>
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="365">Last 1 Year</option>
-              <option value="">All Time</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+              <option value={500}>500</option>
+              <option value={1000}>All</option>
             </select>
-          </div>
 
-          <button
-            onClick={clearFilters}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              isDarkMode 
-                ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50' 
-                : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
-            }`}
-          >
-            Reset
-          </button>
+            <button
+              onClick={clearFilters}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+                  : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
+              }`}
+            >
+              Reset All Filters
+            </button>
+          </div>
         </div>
       </div>
 
@@ -475,7 +713,7 @@ const TradePnL = memo(function TradePnL() {
           </div>
         ) : (
           <div className="flex flex-col min-h-0 flex-1">
-            <div className="overflow-auto flex-1">
+            <div className="overflow-auto flex-1 max-h-96">
               <table className="w-full">
                 <thead className={`sticky top-0 ${isDarkMode ? 'bg-gray-700/90' : 'bg-gray-100/90'} backdrop-blur-sm`}>
                   <tr>

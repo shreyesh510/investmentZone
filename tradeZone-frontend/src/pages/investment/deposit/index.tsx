@@ -16,7 +16,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  Legend,
+  AreaChart,
+  Area
 } from 'recharts';
 
 
@@ -684,6 +687,7 @@ const Deposit = memo(function Deposit() {
               )}
             </div>
           </div>
+
         </div>
 
         {/* Recent Activity Sidebar */}
@@ -694,7 +698,7 @@ const Deposit = memo(function Deposit() {
         }`}>
           <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
           
-          <div className="space-y-3 max-h-[400px] sm:max-h-[600px] overflow-y-auto">
+          <div className="space-y-3 max-h-[600px] sm:max-h-[800px] lg:max-h-[900px] overflow-y-auto">
             {filteredDeposits.length === 0 ? (
               <div className={`text-center py-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
