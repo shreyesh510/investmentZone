@@ -66,3 +66,16 @@ export const fetchDashboardTransactions = createAsyncThunk(
     }
   }
 );
+
+// Fetch trade PnL progress data
+export const fetchTradePnLProgress = createAsyncThunk(
+  'newDashboard/fetchTradePnLProgress',
+  async (year?: number, { rejectWithValue }) => {
+    try {
+      const data = await newDashboardApi.getTradePnLProgress(year);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch trade PnL progress data');
+    }
+  }
+);
