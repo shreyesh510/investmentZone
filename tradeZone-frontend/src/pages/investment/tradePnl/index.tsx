@@ -366,6 +366,150 @@ const TradePnL = memo(function TradePnL() {
         </div>
       </div>
 
+      {/* Enhanced Filters */}
+      <div className={`p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
+        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+      }`}>
+        <div className="space-y-4">
+          {/* Date Filter Type Selection */}
+          <div className="flex flex-wrap gap-4 items-center">
+            <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Date Filter:
+            </h3>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="preset"
+                  checked={filters.dateFilterType === 'preset'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Preset Ranges
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="custom"
+                  checked={filters.dateFilterType === 'custom'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Custom Range
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {/* Preset Date Filter */}
+          {filters.dateFilterType === 'preset' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Select Period:
+              </span>
+              <select
+                value={filters.dataFilter}
+                onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
+                className={`px-3 py-2 rounded-lg text-sm border ${
+                  isDarkMode
+                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                    : 'bg-white/70 border-gray-300/50 text-gray-900'
+                }`}
+              >
+                <option value="">All Time</option>
+                <option value="1">Today</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last 1 Year</option>
+              </select>
+            </div>
+          )}
+
+          {/* Custom Date Range Filter */}
+          {filters.dateFilterType === 'custom' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Custom Range:
+              </span>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>to</span>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+              </div>
+              {filters.startDate && filters.endDate && (
+                <span className={`text-xs px-2 py-1 rounded ${
+                  isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {calculateDaysFromCustomRange()} days
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          <div className="flex flex-wrap gap-4 items-center pt-4 border-t border-gray-700/30">
+            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Items per page:
+            </span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
+              className={`px-3 py-2 rounded-lg text-sm border ${
+                isDarkMode
+                  ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                  : 'bg-white/70 border-gray-300/50 text-gray-900'
+              }`}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+              <option value={500}>500</option>
+              <option value={1000}>All</option>
+            </select>
+
+            <button
+              onClick={clearFilters}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
+                  : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
+              }`}
+            >
+              Reset All Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Statistics Cards */}
       {statistics && (
         <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
@@ -546,146 +690,126 @@ const TradePnL = memo(function TradePnL() {
         </div>
       )}
 
-      {/* Enhanced Filters */}
-      <div className={`p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
+      {/* Trade Rules Section */}
+      <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
-        <div className="space-y-4">
-          {/* Date Filter Type Selection */}
-          <div className="flex flex-wrap gap-4 items-center">
-            <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Date Filter:
-            </h3>
-
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="dateFilterType"
-                  value="preset"
-                  checked={filters.dateFilterType === 'preset'}
-                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Preset Ranges
-                </span>
-              </label>
-
-              <label className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="dateFilterType"
-                  value="custom"
-                  checked={filters.dateFilterType === 'custom'}
-                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
-                  className="w-4 h-4 text-blue-600"
-                />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Custom Range
-                </span>
-              </label>
+        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Trade Rules & Guidelines
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Risk Management</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Never risk more than 2% of capital per trade. Set stop-loss before entry.
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Preset Date Filter */}
-          {filters.dateFilterType === 'preset' && (
-            <div className="flex flex-wrap gap-4 items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Select Period:
-              </span>
-              <select
-                value={filters.dataFilter}
-                onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
-                className={`px-3 py-2 rounded-lg text-sm border ${
-                  isDarkMode
-                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                    : 'bg-white/70 border-gray-300/50 text-gray-900'
-                }`}
-              >
-                <option value="">All Time</option>
-                <option value="1">Today</option>
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-                <option value="180">Last 6 Months</option>
-                <option value="365">Last 1 Year</option>
-              </select>
-            </div>
-          )}
-
-          {/* Custom Date Range Filter */}
-          {filters.dateFilterType === 'custom' && (
-            <div className="flex flex-wrap gap-4 items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Custom Range:
-              </span>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                  className={`px-3 py-2 rounded-lg text-sm border ${
-                    isDarkMode
-                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                      : 'bg-white/70 border-gray-300/50 text-gray-900'
-                  }`}
-                />
-                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>to</span>
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                  className={`px-3 py-2 rounded-lg text-sm border ${
-                    isDarkMode
-                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                      : 'bg-white/70 border-gray-300/50 text-gray-900'
-                  }`}
-                />
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8M3 17h6m0 0V9m0 8l8-8" />
+                </svg>
               </div>
-              {filters.startDate && filters.endDate && (
-                <span className={`text-xs px-2 py-1 rounded ${
-                  isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
-                }`}>
-                  {calculateDaysFromCustomRange()} days
-                </span>
-              )}
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Profit Targets</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Aim for 1:2 risk-reward ratio minimum. Trail stops to protect profits.
+                </p>
+              </div>
             </div>
-          )}
+          </div>
 
-          {/* Pagination Controls */}
-          <div className="flex flex-wrap gap-4 items-center pt-4 border-t border-gray-700/30">
-            <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Items per page:
-            </span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(parseInt(e.target.value))}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                isDarkMode
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                  : 'bg-white/70 border-gray-300/50 text-gray-900'
-              }`}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-              <option value={500}>500</option>
-              <option value={1000}>All</option>
-            </select>
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Trade Journal</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Document every trade with entry/exit reasons and lessons learned.
+                </p>
+              </div>
+            </div>
+          </div>
 
-            <button
-              onClick={clearFilters}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isDarkMode
-                  ? 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50'
-                  : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
-              }`}
-            >
-              Reset All Filters
-            </button>
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-yellow-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Market Hours</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Trade during high volume hours. Avoid first and last 30 minutes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Avoid Overtrading</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Maximum 3-5 trades per day. Quality over quantity always.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Psychology</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Stay disciplined. Control emotions. Never revenge trade after losses.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Trading Tips */}
+        <div className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}`}>
+          <div className="flex items-start space-x-2">
+            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                Golden Rule of Trading
+              </p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Plan your trade and trade your plan. Never enter a position without a clear strategy for entry, exit, and risk management.
+                Consistency and discipline are more important than being right.
+              </p>
+            </div>
           </div>
         </div>
       </div>
