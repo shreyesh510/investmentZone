@@ -14,7 +14,9 @@
       "Bash(npm run lint)",
       "WebSearch",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm run grant-permissions:*)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "ask": []

@@ -7,6 +7,8 @@ import withdrawalsReducer from './slices/withdrawalsSlice';
 import depositsReducer from './slices/depositsSlice';
 import walletsReducer from './slices/walletsSlice';
 import tradePnLReducer from './slices/tradePnLSlice';
+import tradeRulesReducer from './slices/tradeRulesSlice';
+import pnlLimitsReducer from './slices/pnlLimitsSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import newDashboardReducer from './slices/newDashboardSlice';
 
@@ -20,6 +22,8 @@ export const store = configureStore({
     deposits: depositsReducer,
     wallets: walletsReducer,
     tradePnL: tradePnLReducer,
+    tradeRules: tradeRulesReducer,
+    pnlLimits: pnlLimitsReducer,
     dashboard: dashboardReducer,
     newDashboard: newDashboardReducer,
   },

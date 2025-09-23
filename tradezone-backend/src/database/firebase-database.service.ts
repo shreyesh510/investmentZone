@@ -34,6 +34,9 @@ export class FirebaseDatabaseService {
   // New collection for explicit wallet history entries
   private walletHistoryCollection = 'wallet_history';
   private tradePnLCollection = 'tradePnL';
+  private tradeRulesCollection = 'tradeRules';
+  private tradeRuleHistoryCollection = 'tradeRuleHistory';
+  private pnlLimitsCollection = 'pnlLimits';
 
   constructor(private firebaseConfig: FirebaseConfig) {
     // Firestore will be initialized in onModuleInit
@@ -1560,6 +1563,238 @@ export class FirebaseDatabaseService {
     } catch (error) {
       console.error('Error getting trade P&L by id:', error);
       return null;
+    }
+  }
+
+  // Trade Rules operations
+  async createTradeRule(
+    data: Omit<import('../trade-rules/entities/trade-rule.entity').TradeRule, 'id'>,
+  ): Promise<import('../trade-rules/entities/trade-rule.entity').TradeRule> {
+    try {
+      const db = this.getFirestore();
+      const now = new Date();
+      const raw = { ...data, createdAt: now, updatedAt: now } as Record<
+        string,
+        any
+      >;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      const docRef = await db.collection(this.tradeRulesCollection).add(payload);
+      const createdAt = this.serializeDate(payload.createdAt);
+      const updatedAt = this.serializeDate(payload.updatedAt);
+      const lastViolation = payload.lastViolation ? this.serializeDate(payload.lastViolation) : undefined;
+      return {
+        id: docRef.id,
+        ...(payload as any),
+        createdAt,
+        updatedAt,
+        lastViolation,
+      };
+    } catch (error) {
+      console.error('Error creating trade rule:', error);
+      throw error;
+    }
+  }
+
+  async getTradeRules(
+    userId: string,
+  ): Promise<import('../trade-rules/entities/trade-rule.entity').TradeRule[]> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection(this.tradeRulesCollection)
+        .where('userId', '==', userId)
+        .get();
+      const items = snapshot.docs.map((d) => {
+        const data = d.data() as any;
+        const createdAt = this.serializeDate(data.createdAt);
+        const updatedAt = this.serializeDate(data.updatedAt);
+        const lastViolation = data.lastViolation ? this.serializeDate(data.lastViolation) : undefined;
+        return { id: d.id, ...data, createdAt, updatedAt, lastViolation };
+      });
+      return items.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      }) as any;
+    } catch (error) {
+      console.error('Error getting trade rules:', error);
+      return [] as any;
+    }
+  }
+
+  async getTradeRule(
+    id: string,
+  ): Promise<import('../trade-rules/entities/trade-rule.entity').TradeRule | null> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradeRulesCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return null;
+      const data = snap.data() as any;
+      const createdAt = this.serializeDate(data.createdAt);
+      const updatedAt = this.serializeDate(data.updatedAt);
+      const lastViolation = data.lastViolation ? this.serializeDate(data.lastViolation) : undefined;
+      return { id: snap.id, ...data, createdAt, updatedAt, lastViolation };
+    } catch (error) {
+      console.error('Error getting trade rule by id:', error);
+      return null;
+    }
+  }
+
+  async updateTradeRule(
+    id: string,
+    data: Partial<import('../trade-rules/entities/trade-rule.entity').TradeRule>,
+  ): Promise<import('../trade-rules/entities/trade-rule.entity').TradeRule> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradeRulesCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        throw new Error('Trade rule not found');
+      }
+      const raw = { ...data, updatedAt: new Date() } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      await ref.update(payload);
+
+      // Get updated document
+      const updatedSnap = await ref.get();
+      const updatedData = updatedSnap.data() as any;
+      const createdAt = this.serializeDate(updatedData.createdAt);
+      const updatedAt = this.serializeDate(updatedData.updatedAt);
+      const lastViolation = updatedData.lastViolation ? this.serializeDate(updatedData.lastViolation) : undefined;
+      return { id: updatedSnap.id, ...updatedData, createdAt, updatedAt, lastViolation };
+    } catch (error) {
+      console.error('Error updating trade rule:', error);
+      throw error;
+    }
+  }
+
+  async deleteTradeRule(id: string): Promise<void> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradeRulesCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) {
+        throw new Error('Trade rule not found');
+      }
+      await ref.delete();
+    } catch (error) {
+      console.error('Error deleting trade rule:', error);
+      throw error;
+    }
+  }
+
+  // Trade Rule History operations
+  async createTradeRuleHistory(data: {
+    userId: string;
+    ruleId: string;
+    ruleTitle: string;
+    action: 'created' | 'updated' | 'deleted' | 'violation_recorded';
+    timestamp: Date;
+    details?: string;
+  }): Promise<any> {
+    try {
+      const db = this.getFirestore();
+      const historyData = {
+        ...data,
+        createdAt: new Date(),
+      };
+      const docRef = await db.collection(this.tradeRuleHistoryCollection).add(historyData);
+      return {
+        id: docRef.id,
+        ...historyData,
+      };
+    } catch (error) {
+      console.error('Error creating trade rule history:', error);
+      throw error;
+    }
+  }
+
+  async getTradeRuleHistory(userId: string, limit = 20): Promise<any[]> {
+    try {
+      const db = this.getFirestore();
+      const snapshot = await db
+        .collection(this.tradeRuleHistoryCollection)
+        .where('userId', '==', userId)
+        .get();
+
+      const history = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          timestamp: this.serializeDate(data.timestamp),
+          createdAt: this.serializeDate(data.createdAt),
+        };
+      });
+
+      // Sort by timestamp in descending order (most recent first)
+      history.sort((a, b) => {
+        const timestampA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const timestampB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return timestampB - timestampA;
+      });
+
+      return history.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting trade rule history:', error);
+      return [];
+    }
+  }
+
+  // PnL Limits methods
+  async getPnlLimits(userId: string): Promise<any> {
+    try {
+      const db = this.getFirestore();
+      const doc = await db.collection(this.pnlLimitsCollection).doc(userId).get();
+
+      if (doc.exists) {
+        return doc.data();
+      } else {
+        // Return default pnl limits
+        const defaultPnlLimits = {
+          lossAmount: 5,
+          profitAmount: 15,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        // Create default pnl limits in database
+        await db.collection(this.pnlLimitsCollection).doc(userId).set(defaultPnlLimits);
+        return defaultPnlLimits;
+      }
+    } catch (error) {
+      console.error('Error getting pnl limits:', error);
+      return { lossAmount: 5, profitAmount: 15 };
+    }
+  }
+
+  async updatePnlLimits(userId: string, pnlLimits: { lossAmount?: number; profitAmount?: number }): Promise<any> {
+    try {
+      const db = this.getFirestore();
+      const updateData = {
+        ...pnlLimits,
+        updatedAt: new Date(),
+      };
+
+      await db.collection(this.pnlLimitsCollection).doc(userId).update(updateData);
+
+      // Get updated pnl limits
+      const doc = await db.collection(this.pnlLimitsCollection).doc(userId).get();
+      return doc.data();
+    } catch (error) {
+      console.error('Error updating pnl limits:', error);
+      throw error;
     }
   }
 }

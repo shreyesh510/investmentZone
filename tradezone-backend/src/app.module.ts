@@ -12,6 +12,7 @@ import { DepositsModule } from './deposits/deposits.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TradePnLModule } from './trade-pnl/trade-pnl.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TradeRulesModule } from './trade-rules/trade-rules.module';
 
 import { FirebaseDatabaseService } from './database/firebase-database.service';
 
@@ -26,6 +27,7 @@ import { FirebaseDatabaseService } from './database/firebase-database.service';
     WalletsModule,
     TradePnLModule,
     DashboardModule,
+    TradeRulesModule,
   ],
   controllers: [AppController],
   providers: [
