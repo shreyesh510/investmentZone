@@ -36,7 +36,6 @@ const TradePnL = memo(function TradePnL() {
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -221,17 +220,15 @@ const TradePnL = memo(function TradePnL() {
       .reduce((sum, d) => sum + (d.amount || 0), 0);
   };
 
-  // Calculate net amount (deposits - withdrawals) = investment/loss
+  // Calculate net amount (withdrawals - deposits) = profit/return
   const calculateNetAmount = () => {
     const totalWithdrawals = calculateWithdrawalTotal();
     const totalDeposits = calculateDepositTotal();
-    return totalDeposits - totalWithdrawals;
+    return totalWithdrawals - totalDeposits;
   };
 
   const content = (
-    <div className={`flex-1 flex flex-col lg:flex-row gap-6 p-4 lg:p-6 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
-      {/* Main Content - 75% on desktop, full width on mobile */}
-      <div className="flex-1 min-w-0">
+    <div className={`flex-1 p-6 flex flex-col min-h-0 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
       {/* Error Display */}
       {error && (
         <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -280,12 +277,12 @@ const TradePnL = memo(function TradePnL() {
         </div>
       </div>
 
-      {/* Combined Deposits, Withdrawals & Net Amount Card */}
+      {/* Combined Withdrawals & Net Return Card */}
       <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Deposit & Withdrawal Overview ({
+          Withdrawal & Return Overview ({
             filters.dateFilterType === 'custom' && filters.startDate && filters.endDate
               ? `${filters.startDate} to ${filters.endDate}`
               : filters.dataFilter === '' ? 'All Time'
@@ -294,78 +291,58 @@ const TradePnL = memo(function TradePnL() {
           })
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Total Deposits */}
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-500">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Deposits</p>
-              <div className="flex flex-col space-y-1">
-                <p className={`text-lg font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                  {formatCurrencyWithUSD(calculateDepositTotal()).inr}
-                </p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-500'}`}>
-                  {formatCurrencyWithUSD(calculateDepositTotal()).usd}
-                </p>
-              </div>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Total Withdrawals */}
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-500">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Withdrawals</p>
               <div className="flex flex-col space-y-1">
-                <p className={`text-lg font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                <p className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                   {formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
                 </p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-orange-300' : 'text-orange-500'}`}>
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-orange-300' : 'text-orange-500'}`}>
                   {formatCurrencyWithUSD(calculateWithdrawalTotal()).usd}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Net Amount (Deposits - Withdrawals) */}
+          {/* Net Return */}
           <div className="flex items-center space-x-4">
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
               calculateNetAmount() >= 0
-                ? 'bg-gradient-to-br from-red-500 to-rose-500'
-                : 'bg-gradient-to-br from-green-500 to-emerald-500'
+                ? 'bg-gradient-to-br from-green-500 to-emerald-500'
+                : 'bg-gradient-to-br from-red-500 to-rose-500'
             }`}>
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {calculateNetAmount() >= 0 ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8M3 7l4 4m0 0v4m0-4l4-4" />
-                ) : (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8M3 17l4-4m0 0V9m0 4l4-4" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8M3 7l4 4m0 0v4m0-4l4-4" />
                 )}
               </svg>
             </div>
             <div>
-              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Amount</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Return</p>
               <div className="flex flex-col space-y-1">
-                <p className={`text-lg font-bold ${
+                <p className={`text-xl font-bold ${
                   calculateNetAmount() >= 0
-                    ? (isDarkMode ? 'text-red-400' : 'text-red-600')
-                    : (isDarkMode ? 'text-green-400' : 'text-green-600')
+                    ? (isDarkMode ? 'text-green-400' : 'text-green-600')
+                    : (isDarkMode ? 'text-red-400' : 'text-red-600')
                 }`}>
-                  {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
+                  {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
                 </p>
-                <p className={`text-xs font-medium ${
+                <p className={`text-sm font-medium ${
                   calculateNetAmount() >= 0
-                    ? (isDarkMode ? 'text-red-300' : 'text-red-500')
-                    : (isDarkMode ? 'text-green-300' : 'text-green-500')
+                    ? (isDarkMode ? 'text-green-300' : 'text-green-500')
+                    : (isDarkMode ? 'text-red-300' : 'text-red-500')
                 }`}>
-                  {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
+                  {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
                 </p>
               </div>
             </div>
@@ -374,104 +351,118 @@ const TradePnL = memo(function TradePnL() {
 
         <div className="mt-4 pt-4 border-t border-gray-700/30 flex justify-between items-center text-xs">
           <div className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
-            <span>Net Amount = Deposits - Withdrawals</span>
-            {deposits && deposits.length > 0 && (
-              <span className="ml-4">• {deposits.length} deposit records</span>
-            )}
+            <span>Net Return = Withdrawals - Deposits</span>
             {withdrawals && withdrawals.length > 0 && (
               <span className="ml-4">• {withdrawals.length} withdrawal records</span>
             )}
           </div>
           <span className={`px-2 py-1 rounded ${
             calculateNetAmount() >= 0
-              ? (isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
-              : (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+              ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
+              : (isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
           }`}>
-            {calculateNetAmount() >= 0 ? 'Investment Active' : 'Profit Made'}
+            {calculateNetAmount() >= 0 ? 'Profit Made' : 'Investment Active'}
           </span>
         </div>
       </div>
 
-      {/* Enhanced Filters - All in one horizontal line */}
-      <div className={`p-4 rounded-2xl backdrop-blur-lg border mb-6 ${
+      {/* Enhanced Filters */}
+      <div className={`p-5 rounded-2xl backdrop-blur-lg border mb-6 ${
         isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
-        <div className="flex flex-wrap gap-4 items-center justify-between">
-          {/* Date Filter Type */}
-          <div className="flex items-center space-x-4">
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Filter:
-            </span>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="dateFilterType"
-                value="preset"
-                checked={filters.dateFilterType === 'preset'}
-                onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Preset
-              </span>
-            </label>
-            <label className="flex items-center space-x-2">
-              <input
-                type="radio"
-                name="dateFilterType"
-                value="custom"
-                checked={filters.dateFilterType === 'custom'}
-                onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
-                className="w-4 h-4 text-blue-600"
-              />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Custom
-              </span>
-            </label>
+        <div className="space-y-4">
+          {/* Date Filter Type Selection */}
+          <div className="flex flex-wrap gap-4 items-center">
+            <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Date Filter:
+            </h3>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="preset"
+                  checked={filters.dateFilterType === 'preset'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Preset Ranges
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="dateFilterType"
+                  value="custom"
+                  checked={filters.dateFilterType === 'custom'}
+                  onChange={(e) => handleFilterChange('dateFilterType', e.target.value)}
+                  className="w-4 h-4 text-blue-600"
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Custom Range
+                </span>
+              </label>
+            </div>
           </div>
 
-          {/* Preset or Custom Filter Options */}
-          {filters.dateFilterType === 'preset' ? (
-            <select
-              value={filters.dataFilter}
-              onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                isDarkMode
-                  ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                  : 'bg-white/70 border-gray-300/50 text-gray-900'
-              }`}
-            >
-              <option value="">All Time</option>
-              <option value="1">Today</option>
-              <option value="7">Last 7 Days</option>
-              <option value="30">Last 30 Days</option>
-              <option value="90">Last 90 Days</option>
-              <option value="180">Last 6 Months</option>
-              <option value="365">Last 1 Year</option>
-            </select>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+          {/* Preset Date Filter */}
+          {filters.dateFilterType === 'preset' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Select Period:
+              </span>
+              <select
+                value={filters.dataFilter}
+                onChange={(e) => handleFilterChange('dataFilter', e.target.value)}
                 className={`px-3 py-2 rounded-lg text-sm border ${
                   isDarkMode
                     ? 'bg-gray-700/50 border-gray-600/50 text-white'
                     : 'bg-white/70 border-gray-300/50 text-gray-900'
                 }`}
-              />
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>to</span>
-              <input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className={`px-3 py-2 rounded-lg text-sm border ${
-                  isDarkMode
-                    ? 'bg-gray-700/50 border-gray-600/50 text-white'
-                    : 'bg-white/70 border-gray-300/50 text-gray-900'
-                }`}
-              />
+              >
+                <option value="">All Time</option>
+                <option value="1">Today</option>
+                <option value="7">Last 7 Days</option>
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last 1 Year</option>
+              </select>
+            </div>
+          )}
+
+          {/* Custom Date Range Filter */}
+          {filters.dateFilterType === 'custom' && (
+            <div className="flex flex-wrap gap-4 items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Custom Range:
+              </span>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>to</span>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    isDarkMode
+                      ? 'bg-gray-700/50 border-gray-600/50 text-white'
+                      : 'bg-white/70 border-gray-300/50 text-gray-900'
+                  }`}
+                />
+              </div>
               {filters.startDate && filters.endDate && (
                 <span className={`text-xs px-2 py-1 rounded ${
                   isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700'
@@ -482,10 +473,10 @@ const TradePnL = memo(function TradePnL() {
             </div>
           )}
 
-          {/* Items per page and Reset button */}
-          <div className="flex items-center space-x-4">
+          {/* Pagination Controls */}
+          <div className="flex flex-wrap gap-4 items-center pt-4 border-t border-gray-700/30">
             <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Items:
+              Items per page:
             </span>
             <select
               value={itemsPerPage}
@@ -513,7 +504,7 @@ const TradePnL = memo(function TradePnL() {
                   : 'bg-gray-200/50 text-gray-700 hover:bg-gray-300/50'
               }`}
             >
-              Reset
+              Reset All Filters
             </button>
           </div>
         </div>
@@ -527,7 +518,7 @@ const TradePnL = memo(function TradePnL() {
           <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             {statistics.period} Statistics
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-green-500 to-emerald-500">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,14 +527,9 @@ const TradePnL = memo(function TradePnL() {
               </div>
               <div>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Profit</p>
-                <div className="flex flex-col space-y-1">
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                    {formatCurrencyWithUSD((statistics.totalProfit || 0) * 89).inr}
-                  </p>
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-green-300' : 'text-green-500'}`}>
-                    ${statistics.totalProfit?.toFixed(2) || '0.00'}
-                  </p>
-                </div>
+                <p className={`text-xl font-semibold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  ${statistics.totalProfit?.toFixed(2) || '0.00'}
+                </p>
               </div>
             </div>
 
@@ -555,17 +541,25 @@ const TradePnL = memo(function TradePnL() {
               </div>
               <div>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Loss</p>
-                <div className="flex flex-col space-y-1">
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
-                    {formatCurrencyWithUSD(Math.abs(statistics.totalLoss || 0) * 89).inr}
-                  </p>
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-red-300' : 'text-red-500'}`}>
-                    ${Math.abs(statistics.totalLoss || 0).toFixed(2)}
-                  </p>
-                </div>
+                <p className={`text-xl font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
+                  ${statistics.totalLoss?.toFixed(2) || '0.00'}
+                </p>
               </div>
             </div>
 
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-500">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Win Rate</p>
+                <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {statistics.winRate || '0%'}
+                </p>
+              </div>
+            </div>
 
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500 to-pink-500">
@@ -575,14 +569,9 @@ const TradePnL = memo(function TradePnL() {
               </div>
               <div>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Daily P&L</p>
-                <div className="flex flex-col space-y-1">
-                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {formatCurrencyWithUSD((parseFloat(statistics.averageDailyPnL || '0') * 89)).inr}
-                  </p>
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    ${statistics.averageDailyPnL || '0.00'}
-                  </p>
-                </div>
+                <p className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  ${statistics.averageDailyPnL || '0.00'}
+                </p>
               </div>
             </div>
 
@@ -603,7 +592,227 @@ const TradePnL = memo(function TradePnL() {
         </div>
       )}
 
+      {/* PnL Chart - Visual Data Representation */}
+      {items && items.length > 0 && (
+        <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
+          isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Daily P&L Trend Analysis
+          </h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={(() => {
+                  // Group trades by date and aggregate P&L
+                  const dateMap = new Map<string, { date: string; pnl: number; profit: number; loss: number; fullDate: Date }>();
 
+                  items.forEach(item => {
+                    const date = new Date(item.date);
+                    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                    const pnl = parseFloat(item.netPnL || 0); // Use netPnL instead of profit
+
+                    if (dateMap.has(dateKey)) {
+                      const existing = dateMap.get(dateKey)!;
+                      existing.pnl += pnl;
+                      existing.profit += pnl > 0 ? pnl : 0;
+                      existing.loss += pnl < 0 ? Math.abs(pnl) : 0;
+                    } else {
+                      dateMap.set(dateKey, {
+                        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        pnl: pnl,
+                        profit: pnl > 0 ? pnl : 0,
+                        loss: pnl < 0 ? Math.abs(pnl) : 0,
+                        fullDate: date
+                      });
+                    }
+                  });
+
+                  // Convert to array and sort by date
+                  const aggregatedData = Array.from(dateMap.values())
+                    .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime())
+                    .map(({ fullDate, ...rest }) => rest); // Remove fullDate from final data
+
+                  return aggregatedData;
+                })()}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#E5E7EB'} />
+                <XAxis
+                  dataKey="date"
+                  stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                  fontSize={12}
+                />
+                <YAxis
+                  stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
+                  fontSize={12}
+                  tickFormatter={(value) => `$${value.toFixed(0)}`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: isDarkMode ? '#1F2937' : '#FFFFFF',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#E5E7EB'}`,
+                    borderRadius: '8px',
+                    color: isDarkMode ? '#FFFFFF' : '#000000'
+                  }}
+                  formatter={(value, name) => [
+                    `$${parseFloat(value).toFixed(2)}`,
+                    name === 'pnl' ? 'P&L' : name
+                  ]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pnl"
+                  stroke="#8B5CF6"
+                  strokeWidth={3}
+                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                  activeDot={{ r: 6, fill: '#8B5CF6' }}
+                  connectNulls={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Chart Legend */}
+          <div className="flex items-center justify-center mt-4 space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Daily P&L Trend
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trade Rules Section */}
+      <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
+        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+      }`}>
+        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Trade Rules & Guidelines
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Risk Management</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Never risk more than 2% of capital per trade. Set stop-loss before entry.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-green-500 to-green-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8M3 17h6m0 0V9m0 8l8-8" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Profit Targets</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Aim for 1:2 risk-reward ratio minimum. Trail stops to protect profits.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Trade Journal</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Document every trade with entry/exit reasons and lessons learned.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-yellow-500 to-yellow-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Market Hours</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Trade during high volume hours. Avoid first and last 30 minutes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-red-500 to-red-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Avoid Overtrading</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Maximum 3-5 trades per day. Quality over quantity always.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={`p-4 rounded-xl ${isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50/50'} border ${isDarkMode ? 'border-gray-600/30' : 'border-gray-200/50'}`}>
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-semibold text-sm mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Psychology</h4>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Stay disciplined. Control emotions. Never revenge trade after losses.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Trading Tips */}
+        <div className={`mt-4 p-4 rounded-lg ${isDarkMode ? 'bg-blue-500/10 border border-blue-500/30' : 'bg-blue-50 border border-blue-200'}`}>
+          <div className="flex items-start space-x-2">
+            <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <p className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+                Golden Rule of Trading
+              </p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Plan your trade and trade your plan. Never enter a position without a clear strategy for entry, exit, and risk management.
+                Consistency and discipline are more important than being right.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Table */}
       <div className={`flex-1 rounded-2xl backdrop-blur-lg border overflow-hidden flex flex-col min-h-0 ${
@@ -668,7 +877,7 @@ const TradePnL = memo(function TradePnL() {
                         {new Date(item.createdAt).toLocaleTimeString()}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${
-                        item.netPnL >= 0
+                        item.netPnL >= 0 
                           ? (isDarkMode ? 'text-green-400' : 'text-green-600')
                           : (isDarkMode ? 'text-red-400' : 'text-red-600')
                       }`}>
@@ -687,8 +896,8 @@ const TradePnL = memo(function TradePnL() {
                           <button
                             onClick={() => handleEdit(item)}
                             className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                              isDarkMode
-                                ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'
+                              isDarkMode 
+                                ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30' 
                                 : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
                             }`}
                           >
@@ -697,8 +906,8 @@ const TradePnL = memo(function TradePnL() {
                           <button
                             onClick={() => setDeleteConfirmId(item.id)}
                             className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                              isDarkMode
-                                ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                              isDarkMode 
+                                ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30' 
                                 : 'bg-red-100 text-red-600 hover:bg-red-200'
                             }`}
                           >
@@ -717,7 +926,7 @@ const TradePnL = memo(function TradePnL() {
                     <td></td>
                     <td></td>
                     <td className={`px-6 py-3 text-sm ${
-                      totals.netPnL >= 0
+                      totals.netPnL >= 0 
                         ? (isDarkMode ? 'text-green-400' : 'text-green-600')
                         : (isDarkMode ? 'text-red-400' : 'text-red-600')
                     }`}>
@@ -793,206 +1002,6 @@ const TradePnL = memo(function TradePnL() {
           </div>
         )}
       </div>
-    </div>
-
-    {/* Right Sidebar - 25% on desktop, full width below main content on mobile */}
-    <div className="w-full lg:w-1/4 lg:min-w-0 space-y-6">
-      {/* Performance Metrics */}
-      <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Performance Metrics
-        </h3>
-
-        {/* Unified Circular Progress Chart */}
-        <div className="flex flex-col items-center mb-6">
-          {/* Multi-segment Circular Chart */}
-          <div className="relative w-64 h-64 mb-6">
-            <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 42 42">
-              {/* Background Circle */}
-              <circle cx="21" cy="21" r="15.915" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="3"/>
-
-              {(() => {
-                const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal() + (totals.profit * 89) + (Math.abs(totals.loss) * 89);
-                if (totalAmount === 0) return null;
-
-                const depositPercent = (calculateDepositTotal() / totalAmount) * 100;
-                const withdrawalPercent = (calculateWithdrawalTotal() / totalAmount) * 100;
-                const profitPercent = ((totals.profit * 89) / totalAmount) * 100;
-                const lossPercent = ((Math.abs(totals.loss) * 89) / totalAmount) * 100;
-
-                let currentOffset = 0;
-
-                return (
-                  <>
-                    {/* Deposits Segment */}
-                    <circle
-                      cx="21" cy="21" r="15.915"
-                      fill="none"
-                      stroke={hoveredSegment === 'deposits' ? '#1d4ed8' : '#3b82f6'}
-                      strokeWidth={hoveredSegment === 'deposits' ? "4" : "3"}
-                      strokeDasharray={`${depositPercent} 100`}
-                      strokeDashoffset={-currentOffset}
-                      strokeLinecap="round"
-                      className="cursor-pointer transition-all duration-200"
-                      onMouseEnter={() => setHoveredSegment('deposits')}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    />
-                    {/* Withdrawals Segment */}
-                    <circle
-                      cx="21" cy="21" r="15.915"
-                      fill="none"
-                      stroke={hoveredSegment === 'withdrawals' ? '#ea580c' : '#f97316'}
-                      strokeWidth={hoveredSegment === 'withdrawals' ? "4" : "3"}
-                      strokeDasharray={`${withdrawalPercent} 100`}
-                      strokeDashoffset={-(currentOffset += depositPercent)}
-                      strokeLinecap="round"
-                      className="cursor-pointer transition-all duration-200"
-                      onMouseEnter={() => setHoveredSegment('withdrawals')}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    />
-                    {/* Profit Segment */}
-                    <circle
-                      cx="21" cy="21" r="15.915"
-                      fill="none"
-                      stroke={hoveredSegment === 'profit' ? '#047857' : '#10b981'}
-                      strokeWidth={hoveredSegment === 'profit' ? "4" : "3"}
-                      strokeDasharray={`${profitPercent} 100`}
-                      strokeDashoffset={-(currentOffset += withdrawalPercent)}
-                      strokeLinecap="round"
-                      className="cursor-pointer transition-all duration-200"
-                      onMouseEnter={() => setHoveredSegment('profit')}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    />
-                    {/* Loss Segment */}
-                    <circle
-                      cx="21" cy="21" r="15.915"
-                      fill="none"
-                      stroke={hoveredSegment === 'loss' ? '#dc2626' : '#ef4444'}
-                      strokeWidth={hoveredSegment === 'loss' ? "4" : "3"}
-                      strokeDasharray={`${lossPercent} 100`}
-                      strokeDashoffset={-(currentOffset += profitPercent)}
-                      strokeLinecap="round"
-                      className="cursor-pointer transition-all duration-200"
-                      onMouseEnter={() => setHoveredSegment('loss')}
-                      onMouseLeave={() => setHoveredSegment(null)}
-                    />
-                  </>
-                );
-              })()}
-            </svg>
-
-            {/* Center Content - Dynamic based on hover */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              {hoveredSegment ? (
-                <>
-                  <span className={`text-lg font-bold ${
-                    hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
-                    hoveredSegment === 'withdrawals' ? (isDarkMode ? 'text-orange-400' : 'text-orange-600') :
-                    hoveredSegment === 'profit' ? (isDarkMode ? 'text-green-400' : 'text-green-600') :
-                    (isDarkMode ? 'text-red-400' : 'text-red-600')
-                  }`}>
-                    {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).inr :
-                     hoveredSegment === 'withdrawals' ? formatCurrencyWithUSD(calculateWithdrawalTotal()).inr :
-                     hoveredSegment === 'profit' ? formatCurrencyWithUSD(totals.profit * 89).inr :
-                     formatCurrencyWithUSD(Math.abs(totals.loss) * 89).inr}
-                  </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
-                    {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).usd :
-                     hoveredSegment === 'withdrawals' ? formatCurrencyWithUSD(calculateWithdrawalTotal()).usd :
-                     hoveredSegment === 'profit' ? formatCurrencyWithUSD(totals.profit * 89).usd :
-                     formatCurrencyWithUSD(Math.abs(totals.loss) * 89).usd}
-                  </span>
-                  <span className={`text-sm font-medium ${
-                    hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
-                    hoveredSegment === 'withdrawals' ? (isDarkMode ? 'text-orange-400' : 'text-orange-600') :
-                    hoveredSegment === 'profit' ? (isDarkMode ? 'text-green-400' : 'text-green-600') :
-                    (isDarkMode ? 'text-red-400' : 'text-red-600')
-                  }`}>
-                    {hoveredSegment.charAt(0).toUpperCase() + hoveredSegment.slice(1)}
-                  </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    {(() => {
-                      const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal() + (totals.profit * 89) + (Math.abs(totals.loss) * 89);
-                      const amount = hoveredSegment === 'deposits' ? calculateDepositTotal() :
-                                   hoveredSegment === 'withdrawals' ? calculateWithdrawalTotal() :
-                                   hoveredSegment === 'profit' ? (totals.profit * 89) :
-                                   (Math.abs(totals.loss) * 89);
-                      return `${((amount / totalAmount) * 100).toFixed(1)}% of total`;
-                    })()}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className={`text-lg font-bold ${
-                    calculateNetAmount() >= 0
-                      ? (isDarkMode ? 'text-red-400' : 'text-red-600')
-                      : (isDarkMode ? 'text-green-400' : 'text-green-600')
-                  }`}>
-                    {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
-                  </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
-                    {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
-                  </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
-                    Net Amount
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="grid grid-cols-2 gap-4 w-full">
-            {/* Deposits */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Deposits</p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} truncate`}>
-                  {formatCurrencyWithUSD(calculateDepositTotal()).inr}
-                </p>
-              </div>
-            </div>
-
-            {/* Withdrawals */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Withdrawals</p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-orange-400' : 'text-orange-600'} truncate`}>
-                  {formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
-                </p>
-              </div>
-            </div>
-
-            {/* Profit */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Profit</p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'} truncate`}>
-                  {formatCurrencyWithUSD(totals.profit * 89).inr}
-                </p>
-              </div>
-            </div>
-
-            {/* Loss */}
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loss</p>
-                <p className={`text-xs font-medium ${isDarkMode ? 'text-red-400' : 'text-red-600'} truncate`}>
-                  {formatCurrencyWithUSD(Math.abs(totals.loss) * 89).inr}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
     </div>
   );
 

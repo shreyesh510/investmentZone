@@ -1,8 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { fetchUnifiedDashboard, type UnifiedDashboardData } from '../thunks/dashboard/dashboardThunks';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { DashboardSummary } from '../../services/dashboardApi';
 
 interface DashboardState {
-  data: UnifiedDashboardData | null;
+  data: DashboardSummary | null;
   loading: boolean;
   error: string | null;
   lastUpdated: string | null;
@@ -19,36 +19,39 @@ const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState,
   reducers: {
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+      if (action.payload) {
+        state.error = null;
+      }
+    },
+    setDashboardData: (state, action: PayloadAction<DashboardSummary>) => {
+      state.data = action.payload;
+      state.loading = false;
+      state.error = null;
+      state.lastUpdated = new Date().toISOString();
+    },
+    setError: (state, action: PayloadAction<string>) => {
+      state.error = action.payload;
+      state.loading = false;
+    },
     clearError: (state) => {
       state.error = null;
     },
-    clearData: (state) => {
+    clearDashboard: (state) => {
       state.data = null;
       state.error = null;
       state.lastUpdated = null;
     },
   },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchUnifiedDashboard.pending, (state) => {
-        console.log('🔄 Dashboard slice: fetchUnifiedDashboard.pending');
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchUnifiedDashboard.fulfilled, (state, action) => {
-        console.log('✅ Dashboard slice: fetchUnifiedDashboard.fulfilled', action.payload);
-        state.loading = false;
-        state.data = action.payload;
-        state.error = null;
-        state.lastUpdated = new Date().toISOString();
-      })
-      .addCase(fetchUnifiedDashboard.rejected, (state, action) => {
-        console.log('❌ Dashboard slice: fetchUnifiedDashboard.rejected', action.payload);
-        state.loading = false;
-        state.error = action.payload as string;
-      });
-  },
 });
 
-export const { clearError, clearData } = dashboardSlice.actions;
+export const {
+  setLoading,
+  setDashboardData,
+  setError,
+  clearError,
+  clearDashboard,
+} = dashboardSlice.actions;
+
 export default dashboardSlice.reducer;
