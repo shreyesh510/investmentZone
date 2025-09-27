@@ -1,20 +1,11 @@
 import { memo, useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import RoundedButton from '../../../components/button/RoundedButton';
-import FinancialSummaryCards from '../../../components/investment/FinancialSummaryCards';
 import { useSettings } from '../../../contexts/settingsContext';
 import { usePermissions } from '../../../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '../../../redux/store';
-import { fetchDashboardSummary } from '../../../redux/thunks/dashboard/dashboardThunks';
-import {
-  fetchAllDashboardData
-} from '../../../redux/thunks/dashboard/newDashboardThunks';
-import { setTimeframe, selectDashboardDataByTimeframe } from '../../../redux/slices/newDashboardSlice';
-import { fetchDeposits } from '../../../redux/thunks/deposits/depositsThunks';
-import { fetchWithdrawals } from '../../../redux/thunks/withdrawals/withdrawalsThunks';
-import { fetchTradePnL } from '../../../redux/thunks/tradePnL/tradePnLThunks';
-import TradePnLProgress from '../../../components/dashboard/TradePnLProgress';
+import { fetchUnifiedDashboard } from '../../../redux/thunks/dashboard/dashboardThunks';
 import {
   LineChart,
   Line,
@@ -24,8 +15,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  AreaChart,
-  Area,
   ReferenceLine,
   BarChart,
   Bar
@@ -77,87 +66,31 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
 
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilter>('1M');
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [hoveredSegment, setHoveredSegment] = useState<string | null>(null);
 
-  // Redux state - using both old and new dashboard for transition
-  const { data: oldDashboardData, loading: oldLoading, error: oldError } = useSelector((state: RootState) => state.dashboard);
-  const newDashboard = useSelector((state: RootState) => state.newDashboard);
-  const { items: deposits } = useSelector((state: RootState) => state.deposits);
-  const { items: withdrawals } = useSelector((state: RootState) => state.withdrawals);
-  const { items: tradePnLItems } = useSelector((state: RootState) => state.tradePnL);
+  // Redux state - simplified unified dashboard
+  const { data: unifiedData, loading, error } = useSelector((state: RootState) => state.dashboard);
 
-  // Get data filtered by selected timeframe from cached data
-  const dashboardDataByTimeframe = useSelector((state: RootState) =>
-    selectDashboardDataByTimeframe(state, selectedTimeFilter)
-  );
+  // Debug logging
+  console.log('🔍 InvestmentDashboard render - Redux state:', {
+    data: unifiedData,
+    loading,
+    error,
+    hasData: !!unifiedData
+  });
 
-  // Use new dashboard data if available, fallback to old
-  const loading = newDashboard.loading.all || oldLoading;
-  const error = newDashboard.errors.all || oldError;
-
-  // Create unified data object for component consumption
-  const dashboardData = dashboardDataByTimeframe ? {
-    wallets: {
-      dematWallet: dashboardDataByTimeframe?.wallets?.summary?.dematWallet || { balance: 0, currency: 'USD', count: 0 },
-      bankWallet: dashboardDataByTimeframe?.wallets?.summary?.bankWallet || { balance: 0, currency: 'INR', count: 0 },
-      recentActivity: Array.isArray(dashboardDataByTimeframe?.wallets?.recentActivity) ? dashboardDataByTimeframe.wallets.recentActivity : []
-    },
-
-    positions: {
-      totalInvested: dashboardDataByTimeframe?.positions?.summary?.totalInvested || 0,
-      totalPnL: dashboardDataByTimeframe?.positions?.summary?.totalPnL || 0
-    },
-
-    tradePnL: {
-      total: dashboardDataByTimeframe?.tradePnL?.total || { netPnL: 0, profit: 0, loss: 0, trades: 0 },
-      statistics: dashboardDataByTimeframe?.tradePnL?.statistics || {
-        netPnL: 0,
-        totalTrades: 0,
-        winRate: 0,
-        averageDailyPnL: 0
-      },
-      chartData: dashboardDataByTimeframe?.tradePnL?.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
-    },
-
-    transactions: {
-      deposits: {
-        total: dashboardDataByTimeframe?.transactions?.deposits?.total || 0,
-        pending: dashboardDataByTimeframe?.transactions?.deposits?.pending || 0,
-        completed: dashboardDataByTimeframe?.transactions?.deposits?.completed || 0,
-        list: Array.isArray(dashboardDataByTimeframe?.transactions?.deposits?.recentActivity) ? dashboardDataByTimeframe.transactions.deposits.recentActivity : []
-      },
-      withdrawals: {
-        chartData: dashboardDataByTimeframe?.transactions?.withdrawals?.chartData || { daily: [], weekly: [], monthly: [], yearly: [] }
-      }
-    }
-  } : {
-    // Fallback to old dashboard data structure
-    wallets: oldDashboardData?.wallets || {
-      dematWallet: { balance: 0, currency: 'USD', count: 0 },
-      bankWallet: { balance: 0, currency: 'INR', count: 0 },
-      recentActivity: []
-    },
-
-    positions: oldDashboardData?.positions || {
-      totalInvested: 0,
-      totalPnL: 0
-    },
-
-    tradePnL: oldDashboardData?.tradePnL || {
-      total: { netPnL: 0, profit: 0, loss: 0, trades: 0 },
-      statistics: { netPnL: 0, totalTrades: 0, winRate: 0, averageDailyPnL: 0 },
-      chartData: { daily: [], weekly: [], monthly: [], yearly: [] }
-    },
-
-    transactions: oldDashboardData?.transactions || {
-      deposits: { total: 0, pending: 0, completed: 0, list: [] },
-      withdrawals: { chartData: { daily: [], weekly: [], monthly: [], yearly: [] } }
-    }
-  };
-
-  // Redirect if no permission
+  // Fetch unified dashboard data
   useEffect(() => {
-    if (!canAccessInvestment()) {
-      navigate('/zone');
+    console.log('🚀 InvestmentDashboard: useEffect triggered, dispatching fetchUnifiedDashboard');
+    dispatch(fetchUnifiedDashboard());
+  }, [dispatch]);
+
+
+
+  // Navigate to investment page if user doesn't have access
+  useEffect(() => {
+    if (!canAccessInvestment) {
+      navigate('/investment');
     }
   }, [canAccessInvestment, navigate]);
 
@@ -218,6 +151,32 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
+  };
+
+  // Format currency with both INR and USD (exact copy from Trade P&L)
+  const formatCurrencyWithUSD = (amount: number) => {
+    const usdAmount = (amount / 89).toFixed(2);
+    return {
+      inr: `₹${amount.toLocaleString()}`,
+      usd: `$${usdAmount}`
+    };
+  };
+
+  // Calculate deposit total (simplified)
+  const calculateDepositTotal = () => {
+    return unifiedData?.totalDeposits || 0;
+  };
+
+  // Calculate withdrawal total (simplified)
+  const calculateWithdrawalTotal = () => {
+    return unifiedData?.totalWithdrawals || 0;
+  };
+
+  // Calculate net amount (deposits - withdrawals) = investment/loss
+  const calculateNetAmount = () => {
+    const totalWithdrawals = calculateWithdrawalTotal();
+    const totalDeposits = calculateDepositTotal();
+    return totalDeposits - totalWithdrawals;
   };
 
   // Generate combined deposit & withdrawal chart data
@@ -569,7 +528,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             {error}
           </p>
           <button
-            onClick={() => dispatch(fetchDashboardSummary())}
+            onClick={() => dispatch(fetchUnifiedDashboard())}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Retry
@@ -622,9 +581,7 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
           <RoundedButton
             onClick={() => {
               console.log('🔄 Manually refreshing dashboard data');
-              // Force refresh all data
-              dispatch(fetchAllDashboardData('ALL'));
-              dispatch(fetchDashboardSummary(365));
+              dispatch(fetchUnifiedDashboard());
             }}
             variant="purple"
             size="md"
@@ -640,1039 +597,143 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
         </div>
       </div>
 
-      {/* Financial Summary Section */}
-      <div className={`p-6 rounded-2xl backdrop-blur-lg border mb-8 ${
-        isDarkMode
-          ? 'bg-gray-800/50 border-gray-700/50 shadow-xl'
-          : 'bg-white/80 border-white/50 shadow-xl'
+
+
+      {/* Performance Metrics (Exact copy from Trade P&L) */}
+      <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
       }`}>
-        <h2 className="text-lg font-semibold mb-6 flex items-center">
-          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mr-3">
-            💰
-          </span>
-          Financial Overview
-        </h2>
-        <FinancialSummaryCards isDarkMode={isDarkMode} />
-      </div>
+        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Performance Metrics
+        </h3>
 
-      {/* Portfolio Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Portfolio Value */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        } hover:scale-105 transition-all duration-300`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Demat Account
-            </h3>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-transparent bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text">
-            {formatCurrency(dashboardData?.wallets?.dematWallet?.balance || 0, dashboardData?.wallets?.dematWallet?.currency || 'USD')}
-          </p>
-          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Available balance
-          </p>
-        </div>
+        {/* Unified Circular Progress Chart */}
+        <div className="flex flex-col items-center mb-6">
+          {/* Multi-segment Circular Chart */}
+          <div className="relative w-64 h-64 mb-6">
+            <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 42 42">
+              {/* Background Circle */}
+              <circle cx="21" cy="21" r="15.915" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="3"/>
 
-        {/* Total Invested */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        } hover:scale-105 transition-all duration-300`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Total Invested
-            </h3>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text">
-            {formatCurrency(dashboardData?.positions?.totalInvested || 0, 'INR')}
-          </p>
-        </div>
-
-        {/* Total Returns */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        } hover:scale-105 transition-all duration-300`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Total Returns
-            </h3>
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${
-              (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
-            } flex items-center justify-center`}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d={(dashboardData?.positions?.totalPnL || 0) >= 0 ? "M7 11l5-5m0 0l5 5m-5-5v12" : "M17 13l-5 5m0 0l-5-5m5 5V6"} />
-              </svg>
-            </div>
-          </div>
-          <p className={`text-3xl font-bold ${
-            (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {formatCurrency(dashboardData?.positions?.totalPnL || 0, 'INR')}
-          </p>
-          <p className={`text-sm mt-1 ${
-            (dashboardData?.positions?.totalPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            Positions P&L
-          </p>
-        </div>
-
-        {/* Total Performance */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        } hover:scale-105 transition-all duration-300`}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Total P&L
-            </h3>
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${
-              (dashboardData?.tradePnL?.total?.netPnL || 0) >= 0 ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'
-            } flex items-center justify-center`}>
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-          </div>
-          <p className={`text-3xl font-bold ${
-            (dashboardData?.tradePnL?.total?.netPnL || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {formatCurrency(dashboardData?.tradePnL?.total?.netPnL || 0, 'INR')}
-          </p>
-          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            {dashboardData?.tradePnL?.total?.trades || 0} total trades
-          </p>
-        </div>
-      </div>
-
-
-      {/* Wallet Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 items-start">
-        {/* Left Half - Current Wallets */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border h-full ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        }`}>
-          <h2 className="text-lg font-semibold mb-4">Current Wallets</h2>
-          
-          {/* Wallet Totals - Top Half */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Demat Balance</p>
-                <p className="text-lg font-bold text-blue-400">
-                  {formatCurrency(dashboardData?.wallets?.dematWallet?.balance || 0, dashboardData?.wallets?.dematWallet?.currency || 'USD')}
-                </p>
-              </div>
-              <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Bank Balance</p>
-                <p className="text-lg font-bold text-green-400">
-                  {formatCurrency(dashboardData?.wallets?.bankWallet?.balance || 0, dashboardData?.wallets?.bankWallet?.currency || 'INR')}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
-                }`}>
-                  {dashboardData?.wallets?.dematWallet?.count || 0} Demat Accounts
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
-                }`}>
-                  {dashboardData?.wallets?.bankWallet?.count || 0} Bank Accounts
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Wallet Recent Activity - Bottom Half */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Recent Wallet Activity</h3>
-            <div className="space-y-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-              {(dashboardData?.wallets?.recentActivity || []).slice(0, 4).map((activity) => (
-                <div key={activity.id} className={`p-3 rounded-lg border transition-all duration-200 hover:scale-102 ${
-                  isDarkMode 
-                    ? 'bg-gradient-to-r from-gray-800/60 to-gray-700/60 border-gray-600/50 hover:border-gray-500/70' 
-                    : 'bg-gradient-to-r from-white/80 to-gray-50/80 border-gray-200/60 hover:border-gray-300/80'
-                }`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-2 flex-1">
-                      {/* Action Icon */}
-                      <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activity.action === 'create' ? 'bg-green-500/20 text-green-400' :
-                        activity.action === 'deposit' ? 'bg-blue-500/20 text-blue-400' :
-                        activity.action === 'withdrawal' ? 'bg-red-500/20 text-red-400' :
-                        activity.action === 'trade' ? 'bg-purple-500/20 text-purple-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {activity.action === 'create' && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                        )}
-                        {activity.action === 'deposit' && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                          </svg>
-                        )}
-                        {activity.action === 'withdrawal' && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-                          </svg>
-                        )}
-                        {activity.action === 'trade' && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                          </svg>
-                        )}
-                        {activity.action === 'update' && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-xs mb-1 truncate">
-                          {activity.data?.name || 'Wallet Activity'}
-                        </p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {activity.action} • {new Date(activity.createdAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end space-y-1">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                        activity.action === 'create' ? 'bg-green-500/20 text-green-400' :
-                        activity.action === 'deposit' ? 'bg-blue-500/20 text-blue-400' :
-                        activity.action === 'withdrawal' ? 'bg-red-500/20 text-red-400' :
-                        activity.action === 'trade' ? 'bg-purple-500/20 text-purple-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {activity.action.toUpperCase()}
-                      </span>
-                      
-                      {/* Show amount based on action type */}
-                      {(activity.action === 'deposit' || activity.action === 'withdrawal') && activity.data?.changes?.balance ? (
-                        <span className={`text-xs font-bold ${
-                          activity.action === 'deposit' ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {activity.action === 'deposit' ? '+' : '-'}
-                          {formatCurrency(Math.abs(activity.data.changes.balance), activity.data?.next?.currency || activity.data?.prev?.currency || 'USD')}
-                        </span>
-                      ) : activity.data?.changes?.balance ? (
-                        <span className={`text-xs font-bold ${
-                          activity.data.changes.balance > 0 ? 'text-green-400' : 'text-red-400'
-                        }`}>
-                          {activity.data.changes.balance > 0 ? '+' : ''}
-                          {formatCurrency(activity.data.changes.balance, activity.data?.next?.currency || 'USD')}
-                        </span>
-                      ) : activity.data?.next?.balance && activity.action === 'create' ? (
-                        <span className="text-xs font-bold text-blue-400">
-                          {formatCurrency(activity.data.next.balance, activity.data.next.currency || 'USD')}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Half - Deposits Section */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border h-full ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        }`}>
-          <h2 className="text-lg font-semibold mb-4">Deposits</h2>
-          
-          {/* Deposits Data - Top Half */}
-          <div className="mb-6">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Amount</p>
-                <p className="text-lg font-bold text-blue-400">
-                  {formatCurrency(dashboardData?.transactions?.deposits?.total || 0, 'INR')}
-                </p>
-              </div>
-              <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Count</p>
-                <p className="text-lg font-bold text-gray-300">
-                  {(dashboardData?.transactions?.deposits?.pending || 0) + (dashboardData?.transactions?.deposits?.completed || 0)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'
-                }`}>
-                  {dashboardData?.transactions?.deposits?.completed || 0} Completed
-                </span>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  isDarkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-600'
-                }`}>
-                  {dashboardData?.transactions?.deposits?.pending || 0} Pending
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Deposits Recent Activity - Bottom Half */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Recent Deposit Activity</h3>
-            <div className="space-y-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent">
-              {(dashboardData?.transactions?.deposits?.list || []).slice(0, 5).map((deposit) => (
-                <div key={deposit.id} className={`p-3 rounded-lg border transition-all duration-200 hover:scale-102 ${
-                  isDarkMode 
-                    ? 'bg-gradient-to-r from-gray-800/60 to-gray-700/60 border-gray-600/50 hover:border-gray-500/70' 
-                    : 'bg-gradient-to-r from-white/80 to-gray-50/80 border-gray-200/60 hover:border-gray-300/80'
-                }`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-2 flex-1">
-                      {/* Deposit Icon */}
-                      <div className="w-6 h-6 rounded-md bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                        </svg>
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-xs mb-1 truncate">
-                          {deposit?.method || 'Bank Transfer'}
-                        </p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {deposit?.description || 'No description'}
-                        </p>
-                        <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                          {deposit?.requestedAt ? new Date(deposit.requestedAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric'
-                          }) : 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end space-y-1">
-                      <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                        deposit?.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                        'bg-yellow-500/20 text-yellow-400'
-                      }`}>
-                        {deposit?.status === 'completed' ? 'DONE' : 'PENDING'}
-                      </span>
-                      <span className="text-xs font-bold text-blue-400">
-                        +{formatCurrency(deposit?.amount || 0, 'INR')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Performance & Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Trade P&L Analytics */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        }`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Trade P&L Analytics</h2>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-          </div>
-
-          {/* P&L Summary */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net P&L</p>
-              <p className={`text-lg font-bold ${
-                dashboardData.tradePnL.statistics.netPnL >= 0 ? 'text-green-400' : 'text-red-400'
-              }`}>
-                {formatCurrency(dashboardData.tradePnL.statistics.netPnL, 'INR')}
-              </p>
-            </div>
-            <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Trades</p>
-              <p className="text-lg font-bold text-gray-300">
-                {dashboardData?.tradePnL?.statistics?.totalTrades || 0}
-              </p>
-            </div>
-          </div>
-
-          {/* Line Chart */}
-          <div className="relative h-48 mb-4">
-            <div className={`absolute inset-0 rounded-lg ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-              <svg className="w-full h-full p-4" viewBox="0 0 400 160">
-                {/* Grid Lines */}
-                <defs>
-                  <pattern id="tradegrid" width="40" height="32" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 32" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="1" opacity="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#tradegrid)" />
-                
-                {/* Generate line chart points from trade P&L data */}
-                {(() => {
-                  // Get appropriate data based on timeframe
-                  const getDataForTimeframe = () => {
-                    const chartData = dashboardData.tradePnL?.chartData;
-                    if (!chartData) return [];
-
-                    switch (selectedTimeFilter) {
-                      case '1D': return (chartData as any).daily || [];
-                      case '1W': return (chartData as any).daily || [];
-                      case '1M': return (chartData as any).daily || chartData.weekly || [];
-                      case '3M': return chartData.weekly || [];
-                      case '6M': return chartData.weekly || [];
-                      case '1Y': return chartData.monthly || [];
-                      case 'ALL': return chartData.yearly || [];
-                      default: return chartData.weekly || [];
-                    }
-                  };
-
-                  const data = getDataForTimeframe();
-                  if (!data || data.length === 0) {
-                    return <div className="flex items-center justify-center h-32 text-gray-500">No data available</div>;
-                  }
-                  const rawValues: number[] = data
-                    .map((d: { netPnL: number }) => safeNumber(d.netPnL))
-                    .filter((v: number) => isFinite(v));
-                  if (rawValues.length === 0) {
-                    return <div className="flex items-center justify-center h-32 text-gray-500">No data available</div>;
-                  }
-                  const maxPnL = Math.max(...rawValues);
-                  const minPnL = Math.min(...rawValues);
-                  const width = 360;
-                  const height = 120;
-                  const padding = 20;
-                  const centerY = height / 2;
-                  
-                  const denom = (maxPnL - minPnL) === 0 ? 1 : (maxPnL - minPnL);
-                  const points = data.map((item: TradePnLPoint, index: number) => {
-                    const safeValue = typeof item.netPnL === 'number' && isFinite(item.netPnL) ? item.netPnL : minPnL;
-                    const base = (data.length - 1) || 1;
-                    const x = padding + (index * (width - 2 * padding)) / base;
-                    const normalizedValue = (safeValue - minPnL) / denom; // 0..1
-                    const y = height - padding - (normalizedValue * (height - 2 * padding));
-                    
-                    // Format date based on timeframe
-                    let dateStr = '';
-                    if (selectedTimeFilter === '1W') {
-                      // Daily data: 2025-09-09
-                      dateStr = new Date(item.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    } else if (selectedTimeFilter === '1M') {
-                      // Weekly data: 2025-W32
-                      const weekNumStr = item.period.split('-W')[1];
-                      const yearStr = item.period.split('-W')[0];
-                      const weekNum = parseInt(weekNumStr, 10);
-                      const year = parseInt(yearStr, 10);
-                      const date = new Date(year, 0, 1 + (weekNum - 1) * 7);
-                      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    } else if (selectedTimeFilter === '1Y') {
-                      // Monthly data: 2025-09
-                      const [year, month] = item.period.split('-');
-                      dateStr = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                    } else if (selectedTimeFilter === '5Y') {
-                      // Yearly data: 2025
-                      dateStr = item.period;
-                    }
-                    
-                    return { x, y, netPnL: item.netPnL, period: item.period, dateStr };
-                  });
-                  
-                  const pathData = points
-                    .map((point: { x: number; y: number }, index: number) => {
-                      const px = isFinite(point.x) ? point.x : padding;
-                      const py = isFinite(point.y) ? point.y : (height / 2);
-                      return `${index === 0 ? 'M' : 'L'} ${px} ${py}`;
-                    })
-                    .join(' ');
-                  
-                  return (
-                    <g>
-                      {/* Zero line */}
-                      <line
-                        x1={padding}
-                        y1={centerY}
-                        x2={width - padding}
-                        y2={centerY}
-                        stroke={isDarkMode ? '#4B5563' : '#D1D5DB'}
-                        strokeWidth="1"
-                        strokeDasharray="5,5"
-                      />
-                      
-                      {/* Area under the line */}
-                      <path
-                        d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
-                        fill="url(#greenGradient)"
-                        opacity="0.2"
-                      />
-                      
-                      {/* Line */}
-                      <path
-                        d={pathData}
-                        fill="none"
-                        stroke="#10b981"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      
-                      {/* Data points */}
-                      {points.map((point: any, index: number) => {
-                        const px = isFinite(point.x) ? point.x : padding;
-                        const py = isFinite(point.y) ? point.y : (height / 2);
-                        return (
-                          <g key={index}>
-                            <circle
-                              cx={px}
-                              cy={py}
-                              r="4"
-                              fill="#10b981"
-                              stroke={isDarkMode ? '#1f2937' : '#ffffff'}
-                              strokeWidth="2"
-                            />
-                            <circle
-                              cx={px}
-                              cy={py}
-                              r="8"
-                              fill="transparent"
-                              className="hover:fill-green-400/20 cursor-pointer"
-                            >
-                              <title>{`${point.dateStr}: ${formatCurrency(point.netPnL, 'INR')}`}</title>
-                            </circle>
-                          </g>
-                        );
-                      })}
-                      
-                      {/* Gradient definition */}
-                      <defs>
-                        <linearGradient id="greenGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.4"/>
-                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.1"/>
-                        </linearGradient>
-                      </defs>
-                    </g>
-                  );
-                })()}
-              </svg>
-            </div>
-          </div>
-
-          {/* Chart Legend */}
-          <div className="flex items-center justify-between text-xs mb-4">
-            {(() => {
-              // Get appropriate data based on timeframe
-              const getDataForTimeframe = () => {
-                const chartData = dashboardData.tradePnL?.chartData;
-                if (!chartData) return [];
-
-                switch (selectedTimeFilter) {
-                  case '1D': return (chartData as any).daily || [];
-                  case '1W': return (chartData as any).daily || [];
-                  case '1M': return (chartData as any).daily || chartData.weekly || [];
-                  case '3M': return chartData.weekly || [];
-                  case '6M': return chartData.weekly || [];
-                  case '1Y': return chartData.monthly || [];
-                  case 'ALL': return chartData.yearly || [];
-                  default: return chartData.weekly || [];
-                }
-              };
-              
-              const data = getDataForTimeframe();
-              const firstPeriod = data[0]?.period;
-              const lastPeriod = data[data.length - 1]?.period;
-              
-              let startLabel = '', endLabel = '';
-              
-              if (firstPeriod && lastPeriod) {
-                if (selectedTimeFilter === '1W') {
-                  startLabel = new Date(firstPeriod).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  endLabel = new Date(lastPeriod).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                } else if (selectedTimeFilter === '1M') {
-                  const startWeek = firstPeriod.split('-W')[1];
-                  const endWeek = lastPeriod.split('-W')[1];
-                  startLabel = `Week ${startWeek}`;
-                  endLabel = `Week ${endWeek}`;
-                } else if (selectedTimeFilter === '1Y') {
-                  const [startYear, startMonth] = firstPeriod.split('-');
-                const [endYear, endMonth] = lastPeriod.split('-');
-                startLabel = new Date(parseInt(startYear), parseInt(startMonth) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                endLabel = new Date(parseInt(endYear), parseInt(endMonth) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-              } else if (selectedTimeFilter === '5Y') {
-                startLabel = firstPeriod;
-                endLabel = lastPeriod;
-              }
-              }
-              
-              return (
-                <>
-                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                    {startLabel}
-                  </span>
-                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                    {endLabel}
-                  </span>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Status Summary */}
-          <div className="mt-4">
-            <div className="text-center">
-              <span className="text-sm font-medium">
-                Win Rate: {dashboardData.tradePnL.statistics.winRate}, Avg Daily: {formatCurrency(Number(dashboardData.tradePnL.statistics.averageDailyPnL), 'INR')}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Withdrawal Analytics */}
-        <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800/50 border-gray-700/50 shadow-xl' 
-            : 'bg-white/80 border-white/50 shadow-xl'
-        }`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Withdrawal Analytics</h2>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Withdrawal Summary */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {(() => {
-              // Get appropriate withdrawal data based on timeframe
-              const getWithdrawalDataForTimeframe = () => {
-                const chartData = dashboardData.transactions?.withdrawals?.chartData;
-                if (!chartData) return [];
-                
-                switch (selectedTimeFilter) {
-                  case '1W': return (chartData as any).daily || [];
-                  case '1M': return chartData.weekly || [];
-                  case '1Y': return chartData.monthly || [];
-                  case '5Y': return chartData.yearly || [];
-                  default: return chartData.weekly || [];
-                }
-              };
-              
-              const data = getWithdrawalDataForTimeframe();
-              const totalAmount = data.reduce((sum: number, item: WithdrawalPoint) => sum + (item.totalAmount || 0), 0);
-              const totalCount = data.reduce((sum: number, item: WithdrawalPoint) => sum + (item.count || 0), 0);
-              
-              return (
-                <>
-                  <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Amount</p>
-                    <p className="text-lg font-bold text-red-400">
-                      {formatCurrency(totalAmount, 'INR')}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/80'}`}>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Count</p>
-                    <p className="text-lg font-bold text-gray-300">
-                      {totalCount}
-                    </p>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Line Chart */}
-          <div className="relative h-48 mb-4">
-            <div className={`absolute inset-0 rounded-lg ${isDarkMode ? 'bg-gray-900/50' : 'bg-gray-50'}`}>
-              <svg className="w-full h-full p-4" viewBox="0 0 400 160">
-                {/* Grid Lines */}
-                <defs>
-                  <pattern id="grid" width="40" height="32" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 32" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="1" opacity="0.5"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-                
-                {/* Generate line chart points from withdrawal data */}
-                {(() => {
-                  // Get appropriate withdrawal data based on timeframe
-                  const getWithdrawalDataForTimeframe = () => {
-                    const chartData = dashboardData.transactions?.withdrawals?.chartData;
-                    if (!chartData) return [];
-
-                    switch (selectedTimeFilter) {
-                      case '1D': return (chartData as any).daily || [];
-                      case '1W': return (chartData as any).daily || [];
-                      case '1M': return (chartData as any).daily || chartData.weekly || [];
-                      case '3M': return chartData.weekly || [];
-                      case '6M': return chartData.weekly || [];
-                      case '1Y': return chartData.monthly || [];
-                      case 'ALL': return chartData.yearly || [];
-                      default: return chartData.weekly || [];
-                    }
-                  };
-
-                  const data = getWithdrawalDataForTimeframe();
-                  if (!data || data.length === 0) {
-                    return <div className="flex items-center justify-center h-32 text-gray-500">No withdrawal data available</div>;
-                  }
-                  const rawAmounts: number[] = data
-                    .map((d: { totalAmount: number }) => safeNumber(d.totalAmount))
-                    .filter((v: number) => isFinite(v));
-                  if (rawAmounts.length === 0) {
-                    return <div className="flex items-center justify-center h-32 text-gray-500">No withdrawal data available</div>;
-                  }
-                  const maxAmount = Math.max(...rawAmounts);
-                  const width = 360;
-                  const height = 120;
-                  const padding = 20;
-                  
-                  const points = data.map((item: WithdrawalPoint, index: number) => {
-                    const base = (data.length - 1) || 1;
-                    const x = padding + (index * (width - 2 * padding)) / base;
-                    const safeAmount = typeof item.totalAmount === 'number' && isFinite(item.totalAmount) ? item.totalAmount : 0;
-                    const ratio = maxAmount === 0 ? 0 : safeAmount / maxAmount;
-                    const y = height - padding - (ratio * (height - 2 * padding));
-                    
-                    // Format date based on timeframe for tooltip
-                    let dateStr = '';
-                    if (selectedTimeFilter === '1W') {
-                      dateStr = new Date(item.period).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    } else if (selectedTimeFilter === '1M') {
-                      const weekNumStr = item.period.split('-W')[1];
-                      const yearStr = item.period.split('-W')[0];
-                      const weekNum = parseInt(weekNumStr, 10);
-                      const year = parseInt(yearStr, 10);
-                      const date = new Date(year, 0, 1 + (weekNum - 1) * 7);
-                      dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    } else if (selectedTimeFilter === '1Y') {
-                      const [year, month] = item.period.split('-');
-                      dateStr = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                    } else if (selectedTimeFilter === '5Y') {
-                      dateStr = item.period;
-                    }
-                    
-                    return { x, y, amount: item.totalAmount, date: item.period, dateStr };
-                  });
-                  
-                  const pathData = points
-                    .map((point: { x: number; y: number }, index: number) => {
-                      const px = isFinite(point.x) ? point.x : padding;
-                      const py = isFinite(point.y) ? point.y : (height / 2);
-                      return `${index === 0 ? 'M' : 'L'} ${px} ${py}`;
-                    })
-                    .join(' ');
-                  
-                  return (
-                    <g>
-                      {/* Area under the line */}
-                      <path
-                        d={`${pathData} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
-                        fill="url(#redGradient)"
-                        opacity="0.2"
-                      />
-                      
-                      {/* Line */}
-                      <path
-                        d={pathData}
-                        fill="none"
-                        stroke="#f87171"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      
-                      {/* Data points */}
-                      {points.map((point: any, index: number) => {
-                        const px = isFinite(point.x) ? point.x : padding;
-                        const py = isFinite(point.y) ? point.y : (height / 2);
-                        return (
-                          <g key={index}>
-                            <circle
-                              cx={px}
-                              cy={py}
-                              r="4"
-                              fill="#f87171"
-                              stroke={isDarkMode ? '#1f2937' : '#ffffff'}
-                              strokeWidth="2"
-                            />
-                            <circle
-                              cx={px}
-                              cy={py}
-                              r="8"
-                              fill="transparent"
-                              className="hover:fill-red-400/20 cursor-pointer"
-                            >
-                              <title>{`${point.dateStr}: ${formatCurrency(point.amount, 'INR')}`}</title>
-                            </circle>
-                          </g>
-                        );
-                      })}
-                      
-                      {/* Gradient definition */}
-                      <defs>
-                        <linearGradient id="redGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#f87171" stopOpacity="0.4"/>
-                          <stop offset="100%" stopColor="#f87171" stopOpacity="0.1"/>
-                        </linearGradient>
-                      </defs>
-                    </g>
-                  );
-                })()}
-              </svg>
-            </div>
-          </div>
-
-          {/* Chart Legend */}
-          <div className="flex items-center justify-between text-xs">
-            {(() => {
-              // Get appropriate withdrawal data based on timeframe
-              const getWithdrawalDataForTimeframe = () => {
-                const chartData = dashboardData.transactions?.withdrawals?.chartData;
-                if (!chartData) return [];
-                
-                switch (selectedTimeFilter) {
-                  case '1W': return (chartData as any).daily || [];
-                  case '1M': return chartData.weekly || [];
-                  case '1Y': return chartData.monthly || [];
-                  case '5Y': return chartData.yearly || [];
-                  default: return chartData.weekly || [];
-                }
-              };
-              
-              const data = getWithdrawalDataForTimeframe();
-              const firstPeriod = data[0]?.period;
-              const lastPeriod = data[data.length - 1]?.period;
-              
-              let startLabel = '', endLabel = '';
-              
-              if (firstPeriod && lastPeriod) {
-                if (selectedTimeFilter === '1W') {
-                  startLabel = new Date(firstPeriod).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  endLabel = new Date(lastPeriod).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                } else if (selectedTimeFilter === '1M') {
-                  const startWeek = firstPeriod.split('-W')[1];
-                  const endWeek = lastPeriod.split('-W')[1];
-                  startLabel = `Week ${startWeek}`;
-                  endLabel = `Week ${endWeek}`;
-                } else if (selectedTimeFilter === '1Y') {
-                  const [startYear, startMonth] = firstPeriod.split('-');
-                  const [endYear, endMonth] = lastPeriod.split('-');
-                  startLabel = new Date(parseInt(startYear), parseInt(startMonth) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                  endLabel = new Date(parseInt(endYear), parseInt(endMonth) - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-                } else if (selectedTimeFilter === '5Y') {
-                  startLabel = firstPeriod;
-                  endLabel = lastPeriod;
-                }
-              }
-              
-              return (
-                <>
-                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                    {startLabel}
-                  </span>
-                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                    {endLabel}
-                  </span>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Status Summary */}
-          <div className="mt-4">
-            <div className="text-center">
               {(() => {
-                // Get appropriate withdrawal data based on timeframe
-                const getWithdrawalDataForTimeframe = () => {
-                  const chartData = dashboardData.transactions?.withdrawals?.chartData;
-                  if (!chartData) return [];
-                  
-                  switch (selectedTimeFilter) {
-                    case '1W': return (chartData as any).daily || [];
-                    case '1M': return chartData.weekly || [];
-                    case '1Y': return chartData.monthly || [];
-                    case '5Y': return chartData.yearly || [];
-                    default: return chartData.weekly || [];
-                  }
-                };
-                
-                const data = getWithdrawalDataForTimeframe();
-                const completedCount = data.reduce((sum: number, item: WithdrawalPoint) => sum + (item.completedCount || 0), 0);
-                const pendingCount = data.reduce((sum: number, item: WithdrawalPoint) => sum + (item.pendingCount || 0), 0);
-                
+                const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal();
+                if (totalAmount === 0) return null;
+
+                const depositPercent = (calculateDepositTotal() / totalAmount) * 100;
+                const withdrawalPercent = (calculateWithdrawalTotal() / totalAmount) * 100;
+
+                let currentOffset = 0;
+
                 return (
-                  <span className="text-sm font-medium">
-                    {completedCount} Completed, {pendingCount} Pending
-                  </span>
+                  <>
+                    {/* Deposits Segment */}
+                    <circle
+                      cx="21" cy="21" r="15.915"
+                      fill="none"
+                      stroke={hoveredSegment === 'deposits' ? '#1d4ed8' : '#3b82f6'}
+                      strokeWidth={hoveredSegment === 'deposits' ? "4" : "3"}
+                      strokeDasharray={`${depositPercent} 100`}
+                      strokeDashoffset={-currentOffset}
+                      strokeLinecap="round"
+                      className="cursor-pointer transition-all duration-200"
+                      onMouseEnter={() => setHoveredSegment('deposits')}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                    {/* Withdrawals Segment */}
+                    <circle
+                      cx="21" cy="21" r="15.915"
+                      fill="none"
+                      stroke={hoveredSegment === 'withdrawals' ? '#ea580c' : '#f97316'}
+                      strokeWidth={hoveredSegment === 'withdrawals' ? "4" : "3"}
+                      strokeDasharray={`${withdrawalPercent} 100`}
+                      strokeDashoffset={-(currentOffset += depositPercent)}
+                      strokeLinecap="round"
+                      className="cursor-pointer transition-all duration-200"
+                      onMouseEnter={() => setHoveredSegment('withdrawals')}
+                      onMouseLeave={() => setHoveredSegment(null)}
+                    />
+                  </>
                 );
               })()}
+            </svg>
+
+            {/* Center Content - Dynamic based on hover */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              {hoveredSegment ? (
+                <>
+                  <span className={`text-lg font-bold ${
+                    hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
+                    (isDarkMode ? 'text-orange-400' : 'text-orange-600')
+                  }`}>
+                    {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).inr :
+                     formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
+                  </span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                    {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).usd :
+                     formatCurrencyWithUSD(calculateWithdrawalTotal()).usd}
+                  </span>
+                  <span className={`text-sm font-medium ${
+                    hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
+                    (isDarkMode ? 'text-orange-400' : 'text-orange-600')
+                  }`}>
+                    {hoveredSegment.charAt(0).toUpperCase() + hoveredSegment.slice(1)}
+                  </span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {(() => {
+                      const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal();
+                      const amount = hoveredSegment === 'deposits' ? calculateDepositTotal() : calculateWithdrawalTotal();
+                      return totalAmount > 0 ? `${((amount / totalAmount) * 100).toFixed(1)}% of total` : '0.0% of total';
+                    })()}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className={`text-lg font-bold ${
+                    calculateNetAmount() >= 0
+                      ? (isDarkMode ? 'text-red-400' : 'text-red-600')
+                      : (isDarkMode ? 'text-green-400' : 'text-green-600')
+                  }`}>
+                    {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
+                  </span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                    {calculateNetAmount() >= 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
+                  </span>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} mt-1`}>
+                    Net Amount
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="grid grid-cols-2 gap-4 w-full">
+            {/* Deposits */}
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Deposits</p>
+                <p className={`text-xs font-medium ${isDarkMode ? 'text-blue-400' : 'text-blue-600'} truncate`}>
+                  {formatCurrencyWithUSD(calculateDepositTotal()).inr}
+                </p>
+              </div>
+            </div>
+
+            {/* Withdrawals */}
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Withdrawals</p>
+                <p className={`text-xs font-medium ${isDarkMode ? 'text-orange-400' : 'text-orange-600'} truncate`}>
+                  {formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* New Charts Section - Deposit & Withdrawal History and PnL Analysis */}
-      <div className="grid grid-cols-1 gap-8 mt-8">
-        {/* Deposit & Withdrawal History Chart */}
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-2xl backdrop-blur-lg border ${
-          isDarkMode
-            ? 'bg-gray-800/30 border-gray-700/50 shadow-xl shadow-gray-900/20'
-            : 'bg-white/60 border-white/20 shadow-xl shadow-gray-900/10'
-        }`}>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Deposit & Withdrawal History</h2>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Deposits</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                  <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Withdrawals</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="h-64 sm:h-80">
-            {combinedChartData.length === 0 ? (
-              <div className={`flex items-center justify-center h-full ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                <div className="text-center">
-                  <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  <p className="text-lg font-medium">No transaction data</p>
-                  <p className="text-sm opacity-75">Data will appear here once you make transactions</p>
-                </div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={combinedChartData}>
-                  <defs>
-                    <linearGradient id="colorDeposits" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
-                    </linearGradient>
-                    <linearGradient id="colorWithdrawals" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#F97316" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#F97316" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={isDarkMode ? '#374151' : '#E5E7EB'}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
-                    fontSize={12}
-                    tickFormatter={(date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  />
-                  <YAxis
-                    stroke={isDarkMode ? '#9CA3AF' : '#6B7280'}
-                    fontSize={12}
-                    tickFormatter={(value) => formatCurrency(value, 'INR')}
-                  />
-                  <Tooltip content={<CombinedChartTooltip />} />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="deposits"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    fill="url(#colorDeposits)"
-                    name="Deposits"
-                    connectNulls={false}
-                    dot={{ fill: '#10B981', strokeWidth: 1, r: 1.5 }}
-                    activeDot={{ r: 4, fill: '#10B981' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="withdrawals"
-                    stroke="#F97316"
-                    strokeWidth={2}
-                    fill="url(#colorWithdrawals)"
-                    name="Withdrawals"
-                    connectNulls={false}
-                    dot={{ fill: '#F97316', strokeWidth: 1, r: 1.5 }}
-                    activeDot={{ r: 4, fill: '#F97316' }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          {/* Chart Summary Stats */}
-          <div className="mt-4 pt-4 border-t border-gray-700/30 grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Deposits</p>
-              <p className={`text-lg font-bold text-green-500`}>
-                {formatCurrency(combinedChartData.reduce((sum, d) => sum + d.deposits, 0), 'INR')}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Withdrawals</p>
-              <p className={`text-lg font-bold text-orange-500`}>
-                {formatCurrency(combinedChartData.reduce((sum, d) => sum + d.withdrawals, 0), 'INR')}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Total</p>
-              <p className={`text-lg font-bold ${
-                combinedChartData.reduce((sum, d) => sum + d.net, 0) >= 0 ? 'text-blue-500' : 'text-red-500'
-              }`}>
-                {formatCurrency(Math.abs(combinedChartData.reduce((sum, d) => sum + d.net, 0)), 'INR')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-
-      {/* Trade PnL Progress - GitHub Style Contribution Graph */}
-      <div className="mt-8">
-        <TradePnLProgress isDarkMode={isDarkMode} />
-      </div>
-      </div>
     </div>
   );
 
