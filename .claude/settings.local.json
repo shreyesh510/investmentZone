@@ -16,8 +16,7 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(npm run grant-permissions:*)",
-      "Bash(npm cache clean:*)",
-      "Bash(curl:*)"
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "ask": []

@@ -262,10 +262,10 @@ const Deposit = memo(function Deposit() {
       .reduce((sum, w) => sum + (w.amount || 0), 0);
   };
 
-  // Calculate net amount (deposits - withdrawals) = investment/loss
+  // Calculate net amount (withdrawals - deposits) = profit/return
   const calculateNetAmount = () => {
     const totalWithdrawals = calculateWithdrawalTotal();
-    return totalDeposits - totalWithdrawals;
+    return totalWithdrawals - totalDeposits;
   };
 
   const content = (
@@ -461,15 +461,15 @@ const Deposit = memo(function Deposit() {
                 </div>
               </div>
 
-              {/* Net Investment */}
+              {/* Net Return */}
               <div className="flex items-center space-x-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  calculateNetAmount() <= 0
+                  calculateNetAmount() >= 0
                     ? 'bg-gradient-to-br from-green-500 to-emerald-500'
                     : 'bg-gradient-to-br from-red-500 to-rose-500'
                 }`}>
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {calculateNetAmount() <= 0 ? (
+                    {calculateNetAmount() >= 0 ? (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8M3 17l4-4m0 0V9m0 4l4-4" />
                     ) : (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8M3 7l4 4m0 0v4m0-4l4-4" />
@@ -477,21 +477,21 @@ const Deposit = memo(function Deposit() {
                   </svg>
                 </div>
                 <div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Investment</p>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net Return</p>
                   <div className="flex flex-col space-y-1">
                     <p className={`text-xl font-bold ${
-                      calculateNetAmount() <= 0
+                      calculateNetAmount() >= 0
                         ? (isDarkMode ? 'text-green-400' : 'text-green-600')
                         : (isDarkMode ? 'text-red-400' : 'text-red-600')
                     }`}>
-                      {calculateNetAmount() > 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
+                      {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).inr}
                     </p>
                     <p className={`text-sm font-medium ${
-                      calculateNetAmount() <= 0
+                      calculateNetAmount() >= 0
                         ? (isDarkMode ? 'text-green-300' : 'text-green-500')
                         : (isDarkMode ? 'text-red-300' : 'text-red-500')
                     }`}>
-                      {calculateNetAmount() > 0 ? '-' : '+'}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
+                      {calculateNetAmount() >= 0 ? '+' : ''}{formatCurrencyWithUSD(Math.abs(calculateNetAmount())).usd}
                     </p>
                   </div>
                 </div>
@@ -500,20 +500,17 @@ const Deposit = memo(function Deposit() {
 
             <div className="mt-4 pt-4 border-t border-gray-700/30 flex justify-between items-center text-xs">
               <div className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
-                <span>Net Investment = Deposits - Withdrawals</span>
-                {deposits && deposits.length > 0 && (
-                  <span className="ml-4">• {deposits.length} deposit records</span>
-                )}
+                <span>Net Return = Withdrawals - Deposits</span>
                 {withdrawals && withdrawals.length > 0 && (
-                  <span className="ml-2">• {withdrawals.length} withdrawal records</span>
+                  <span className="ml-4">• {withdrawals.length} withdrawal records</span>
                 )}
               </div>
               <span className={`px-2 py-1 rounded ${
-                calculateNetAmount() <= 0
+                calculateNetAmount() >= 0
                   ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700')
                   : (isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700')
               }`}>
-                {calculateNetAmount() > 0 ? 'Investment Active' : 'Profit Withdrawn'}
+                {calculateNetAmount() >= 0 ? 'Profit Made' : 'Investment Active'}
               </span>
             </div>
           </div>
