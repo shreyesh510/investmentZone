@@ -8,59 +8,22 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get()
-  async getDashboard(@Request() req: any, @Query('days') days?: string) {
-    const userId = req.user.userId;
-    const daysNumber = days ? parseInt(days, 10) : 30;
-
-    return await this.dashboardService.getDashboardSummary(userId, daysNumber);
-  }
-
-  @Get('positions')
-  async getPositions(
+  async getDashboard(
     @Request() req: any,
     @Query('timeframe') timeframe: string = '1M',
+    @Query('year') year?: string,
+    @Query('customStartDate') customStartDate?: string,
+    @Query('customEndDate') customEndDate?: string,
   ) {
-    const userId = req.user.userId;
-    return await this.dashboardService.getPositionsData(userId, timeframe);
-  }
-
-  @Get('wallets')
-  async getWallets(
-    @Request() req: any,
-    @Query('timeframe') timeframe: string = '1M',
-  ) {
-    const userId = req.user.userId;
-    return await this.dashboardService.getWalletsData(userId, timeframe);
-  }
-
-  @Get('trade-pnl')
-  async getTradePnL(
-    @Request() req: any,
-    @Query('timeframe') timeframe: string = '1M',
-  ) {
-    const userId = req.user.userId;
-    return await this.dashboardService.getTradePnLData(userId, timeframe);
-  }
-
-  @Get('transactions')
-  async getTransactions(
-    @Request() req: any,
-    @Query('timeframe') timeframe: string = '1M',
-  ) {
-    const userId = req.user.userId;
-    return await this.dashboardService.getTransactionsData(userId, timeframe);
-  }
-
-  @Get('financial-summary')
-  async getFinancialSummary(@Request() req: any) {
-    const userId = req.user.userId;
-    return await this.dashboardService.getFinancialSummary(userId);
-  }
-
-  @Get('trade-pnl-progress')
-  async getTradePnLProgress(@Request() req: any, @Query('year') year?: string) {
     const userId = req.user.userId;
     const targetYear = year ? parseInt(year, 10) : new Date().getFullYear();
-    return await this.dashboardService.getTradePnLProgress(userId, targetYear);
+
+    return await this.dashboardService.getConsolidatedDashboard(
+      userId,
+      timeframe,
+      targetYear,
+      customStartDate,
+      customEndDate
+    );
   }
 }

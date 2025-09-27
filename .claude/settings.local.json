@@ -17,7 +17,8 @@
       "Bash(findstr:*)",
       "Bash(npm run grant-permissions:*)",
       "Bash(npm cache clean:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

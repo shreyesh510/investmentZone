@@ -105,62 +105,181 @@ export interface DashboardTransactionsResponse {
   };
 }
 
-export const newDashboardApi = {
-  // Get positions data
-  getPositions: async (timeframe: string = '1M'): Promise<DashboardPositionsResponse> => {
-    const response = await getAxios.get(`/dashboard/positions?timeframe=${timeframe}`);
-    return response.data;
-  },
+export interface TimeframeFinancialData {
+  timeframe: string;
+  dateRange: {
+    startDate: string;
+    endDate: string;
+  };
+  deposits: {
+    total: number;
+    count: number;
+    pending: number;
+    completed: number;
+    chartData: any;
+  };
+  withdrawals: {
+    total: number;
+    count: number;
+    pending: number;
+    completed: number;
+    chartData: any;
+  };
+  tradePnL: {
+    totalProfit: number;
+    totalLoss: number;
+    netPnL: number;
+    totalTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    winRate: string;
+    chartData: any;
+  };
+  positions: {
+    total: number;
+    open: number;
+    closed: number;
+    totalInvested: number;
+    positionsPnL: number;
+    chartData: any;
+  };
+  netCashFlow: number;
+  overallPnL: number;
+}
 
-  // Get wallets data
-  getWallets: async (timeframe: string = '1M'): Promise<DashboardWalletsResponse> => {
-    const response = await getAxios.get(`/dashboard/wallets?timeframe=${timeframe}`);
-    return response.data;
-  },
-
-  // Get trade P&L data
-  getTradePnL: async (timeframe: string = '1M'): Promise<DashboardTradePnLResponse> => {
-    const response = await getAxios.get(`/dashboard/trade-pnl?timeframe=${timeframe}`);
-    return response.data;
-  },
-
-  // Get transactions data
-  getTransactions: async (timeframe: string = '1M'): Promise<DashboardTransactionsResponse> => {
-    const response = await getAxios.get(`/dashboard/transactions?timeframe=${timeframe}`);
-    return response.data;
-  },
-
-  // Get all dashboard data in parallel (for initial load)
-  getAllDashboardData: async (timeframe: string = '1M') => {
-    const [positions, wallets, tradePnL, transactions] = await Promise.allSettled([
-      newDashboardApi.getPositions(timeframe),
-      newDashboardApi.getWallets(timeframe),
-      newDashboardApi.getTradePnL(timeframe),
-      newDashboardApi.getTransactions(timeframe),
-    ]);
-
-    return {
-      positions: positions.status === 'fulfilled' ? positions.value : null,
-      wallets: wallets.status === 'fulfilled' ? wallets.value : null,
-      tradePnL: tradePnL.status === 'fulfilled' ? tradePnL.value : null,
-      transactions: transactions.status === 'fulfilled' ? transactions.value : null,
-      errors: {
-        positions: positions.status === 'rejected' ? positions.reason : null,
-        wallets: wallets.status === 'rejected' ? wallets.reason : null,
-        tradePnL: tradePnL.status === 'rejected' ? tradePnL.reason : null,
-        transactions: transactions.status === 'rejected' ? transactions.reason : null,
-      }
+export interface ConsolidatedDashboardResponse {
+  currentWallets: {
+    dematWallet: {
+      balance: number;
+      currency: string;
+      count: number;
+      wallets: any[];
     };
+    bankWallet: {
+      balance: number;
+      currency: string;
+      count: number;
+      wallets: any[];
+    };
+    totalBalance: {
+      USD: number;
+      INR: number;
+    };
+    recentActivity: any[];
+  };
+  financialByTimeframe: {
+    [key: string]: TimeframeFinancialData;
+  };
+  tradePnLProgress: any;
+  requestedTimeframe: string;
+  customDateRange: {
+    customStartDate?: string;
+    customEndDate?: string;
+  } | null;
+  year: number;
+  generatedAt: string;
+  supportedTimeframes: string[];
+}
+
+export const newDashboardApi = {
+  // Get consolidated dashboard data (single API call)
+  getConsolidatedDashboard: async (
+    timeframe: string = '1M',
+    year?: number,
+    customStartDate?: string,
+    customEndDate?: string
+  ): Promise<ConsolidatedDashboardResponse> => {
+    const params = new URLSearchParams();
+    params.append('timeframe', timeframe);
+    if (year) {
+      params.append('year', year.toString());
+    }
+    if (customStartDate) {
+      params.append('customStartDate', customStartDate);
+    }
+    if (customEndDate) {
+      params.append('customEndDate', customEndDate);
+    }
+
+    const response = await getAxios.get(`/dashboard?${params.toString()}`);
+    return response.data;
+  },
+
+  // Get financial data for specific timeframe
+  getFinancialDataByTimeframe: async (timeframe: string): Promise<TimeframeFinancialData | null> => {
+    const data = await newDashboardApi.getConsolidatedDashboard(timeframe);
+    return data.financialByTimeframe[timeframe] || null;
+  },
+
+  // Get financial data for custom date range
+  getFinancialDataByDateRange: async (startDate: string, endDate: string): Promise<TimeframeFinancialData | null> => {
+    const data = await newDashboardApi.getConsolidatedDashboard('CUSTOM', undefined, startDate, endDate);
+    return data.financialByTimeframe['CUSTOM'] || null;
+  },
+
+  // Legacy methods for backward compatibility (these now use the consolidated API)
+  getPositions: async (timeframe: string = '1M'): Promise<DashboardPositionsResponse> => {
+    const data = await newDashboardApi.getConsolidatedDashboard(timeframe);
+    return data.positions;
+  },
+
+  getWallets: async (timeframe: string = '1M'): Promise<DashboardWalletsResponse> => {
+    const data = await newDashboardApi.getConsolidatedDashboard(timeframe);
+    return data.wallets;
+  },
+
+  getTradePnL: async (timeframe: string = '1M'): Promise<DashboardTradePnLResponse> => {
+    const data = await newDashboardApi.getConsolidatedDashboard(timeframe);
+    return data.tradePnL;
+  },
+
+  getTransactions: async (timeframe: string = '1M'): Promise<DashboardTransactionsResponse> => {
+    const data = await newDashboardApi.getConsolidatedDashboard(timeframe);
+    return data.transactions;
+  },
+
+  // Get all dashboard data (now just uses consolidated API)
+  getAllDashboardData: async (timeframe: string = '1M', year?: number) => {
+    try {
+      const data = await newDashboardApi.getConsolidatedDashboard(timeframe, year);
+      return {
+        positions: data.positions,
+        wallets: data.wallets,
+        tradePnL: data.tradePnL,
+        transactions: data.transactions,
+        summary: data.summary,
+        financialSummary: data.financialSummary,
+        tradePnLProgress: data.tradePnLProgress,
+        errors: {
+          positions: null,
+          wallets: null,
+          tradePnL: null,
+          transactions: null,
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching consolidated dashboard data:', error);
+      return {
+        positions: null,
+        wallets: null,
+        tradePnL: null,
+        transactions: null,
+        summary: null,
+        financialSummary: null,
+        tradePnLProgress: null,
+        errors: {
+          positions: error,
+          wallets: error,
+          tradePnL: error,
+          transactions: error,
+        }
+      };
+    }
   },
 
   // Get trade PnL progress data (GitHub-style contribution graph)
   getTradePnLProgress: async (year?: number): Promise<any> => {
-    const params = new URLSearchParams();
-    if (year) {
-      params.append('year', year.toString());
-    }
-
-    const response = await getAxios.get(`/dashboard/trade-pnl-progress?${params.toString()}`);
-    return response.data;
+    const data = await newDashboardApi.getConsolidatedDashboard('1M', year);
+    return data.tradePnLProgress;
   }
 };

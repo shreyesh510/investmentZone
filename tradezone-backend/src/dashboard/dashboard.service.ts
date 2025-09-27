@@ -69,31 +69,48 @@ export interface DashboardSummary {
 
 @Injectable()
 export class DashboardService {
-  private getDateRangeFromTimeframe(timeframe: string): {
+  private getDateRangeFromTimeframe(timeframe: string, customStartDate?: string, customEndDate?: string): {
     startDate: Date;
     endDate: Date;
   } {
-    const endDate = new Date();
+    const endDate = customEndDate ? new Date(customEndDate) : new Date();
     let startDate = new Date();
+
+    if (timeframe === 'CUSTOM' && customStartDate) {
+      startDate = new Date(customStartDate);
+      return { startDate, endDate };
+    }
 
     switch (timeframe) {
       case '1D':
+      case 'D':
         startDate.setDate(endDate.getDate() - 1);
         break;
       case '1W':
+      case 'W':
+      case 'WEEK':
         startDate.setDate(endDate.getDate() - 7);
         break;
       case '1M':
+      case 'M':
+      case 'MONTH':
         startDate.setMonth(endDate.getMonth() - 1);
         break;
       case '3M':
         startDate.setMonth(endDate.getMonth() - 3);
         break;
       case '6M':
+      case '6MONTH':
         startDate.setMonth(endDate.getMonth() - 6);
         break;
       case '1Y':
+      case 'Y':
+      case 'YEAR':
         startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+      case '5Y':
+      case '5YEAR':
+        startDate.setFullYear(endDate.getFullYear() - 5);
         break;
       case 'ALL':
         startDate = new Date(2020, 0, 1); // Set to a very early date
@@ -1548,6 +1565,206 @@ export class DashboardService {
           minPnL: 0,
           winRate: '0.0',
         },
+      };
+    }
+  }
+
+  async getConsolidatedDashboard(
+    userId: string,
+    timeframe: string = '1M',
+    year: number,
+    customStartDate?: string,
+    customEndDate?: string
+  ) {
+    try {
+      // Fetch all data in parallel
+      const [
+        allPositions,
+        allWallets,
+        allDeposits,
+        allWithdrawals,
+        allTradePnL,
+        walletHistory,
+        tradePnLProgress,
+      ] = await Promise.allSettled([
+        this.positionsService.findAll(userId),
+        this.walletsService.list(userId),
+        this.depositsService.list(userId),
+        this.withdrawalsService.list(userId),
+        this.tradePnLService.findAll(userId),
+        this.walletsService.history(userId, 1000),
+        this.getTradePnLProgress(userId, year),
+      ]);
+
+      // Extract data with fallbacks for failed promises
+      const safePositions = allPositions.status === 'fulfilled' ? allPositions.value : [];
+      const safeWallets = allWallets.status === 'fulfilled' ? allWallets.value : [];
+      const safeDeposits = allDeposits.status === 'fulfilled' ? allDeposits.value : [];
+      const safeWithdrawals = allWithdrawals.status === 'fulfilled' ? allWithdrawals.value : [];
+      const safeTradePnL = allTradePnL.status === 'fulfilled' ? allTradePnL.value : [];
+      const safeWalletHistory = walletHistory.status === 'fulfilled' ? walletHistory.value : [];
+      const safeTradePnLProgress = tradePnLProgress.status === 'fulfilled' ? tradePnLProgress.value : null;
+
+      // Generate comprehensive financial data for all supported timeframes
+      const allTimeframes = ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL'];
+      const financialByTimeframe: any = {};
+
+      // Add custom timeframe if provided
+      if (timeframe === 'CUSTOM' && customStartDate) {
+        allTimeframes.push('CUSTOM');
+      }
+
+      // Calculate financial data for each timeframe
+      allTimeframes.forEach(tf => {
+        const { startDate, endDate } = this.getDateRangeFromTimeframe(
+          tf,
+          tf === 'CUSTOM' ? customStartDate : undefined,
+          tf === 'CUSTOM' ? customEndDate : undefined
+        );
+
+        // Filter data by timeframe
+        const filteredDeposits = this.filterByDateRange(safeDeposits, startDate, endDate);
+        const filteredWithdrawals = this.filterByDateRange(safeWithdrawals, startDate, endDate);
+        const filteredTradePnL = this.filterByDateRange(safeTradePnL, startDate, endDate);
+        const filteredPositions = this.filterByDateRange(safePositions, startDate, endDate);
+
+        // Calculate deposits summary
+        const totalDeposits = filteredDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
+        const pendingDeposits = filteredDeposits.filter(d => d.status === 'pending').length;
+        const completedDeposits = filteredDeposits.filter(d => d.status === 'completed').length;
+
+        // Calculate withdrawals summary
+        const totalWithdrawals = filteredWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
+        const pendingWithdrawals = filteredWithdrawals.filter(w => w.status === 'pending').length;
+        const completedWithdrawals = filteredWithdrawals.filter(w => w.status === 'completed').length;
+
+        // Calculate trade P&L summary
+        const totalProfit = filteredTradePnL.reduce((sum, t) => sum + (t.profit || 0), 0);
+        const totalLoss = filteredTradePnL.reduce((sum, t) => sum + Math.abs(t.loss || 0), 0);
+        const netPnL = totalProfit - totalLoss;
+        const totalTrades = filteredTradePnL.length;
+        const winningTrades = filteredTradePnL.filter(t => (t.netPnL || 0) > 0).length;
+        const losingTrades = filteredTradePnL.filter(t => (t.netPnL || 0) < 0).length;
+
+        // Calculate positions summary
+        const totalPositions = filteredPositions.length;
+        const openPositions = filteredPositions.filter(p => p.status === 'open').length;
+        const closedPositions = filteredPositions.filter(p => p.status === 'closed').length;
+        const totalInvested = filteredPositions.reduce((sum, p) => sum + (p.investedAmount || 0), 0);
+        const positionsPnL = filteredPositions.reduce((sum, p) => sum + (p.pnl || 0), 0);
+
+        financialByTimeframe[tf] = {
+          timeframe: tf,
+          dateRange: {
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+          },
+          deposits: {
+            total: totalDeposits,
+            count: filteredDeposits.length,
+            pending: pendingDeposits,
+            completed: completedDeposits,
+            chartData: this.processDepositChartData(filteredDeposits),
+          },
+          withdrawals: {
+            total: totalWithdrawals,
+            count: filteredWithdrawals.length,
+            pending: pendingWithdrawals,
+            completed: completedWithdrawals,
+            chartData: this.processWithdrawalChartData(filteredWithdrawals),
+          },
+          tradePnL: {
+            totalProfit,
+            totalLoss,
+            netPnL,
+            totalTrades,
+            winningTrades,
+            losingTrades,
+            winRate: totalTrades > 0 ? ((winningTrades / totalTrades) * 100).toFixed(1) : '0.0',
+            chartData: this.processChartData(filteredTradePnL),
+          },
+          positions: {
+            total: totalPositions,
+            open: openPositions,
+            closed: closedPositions,
+            totalInvested,
+            positionsPnL,
+            chartData: this.generatePositionsChartDataAllTimeframes(filteredPositions),
+          },
+          // Net cash flow calculation
+          netCashFlow: totalDeposits - totalWithdrawals,
+          // Overall performance
+          overallPnL: netPnL + positionsPnL,
+        };
+      });
+
+      // Current wallet balances (not timeframe dependent)
+      const dematWallets = safeWallets.filter(
+        w => w.platform === 'Delta Exchange' || w.platform === 'Groww'
+      );
+      const bankWallets = safeWallets.filter(
+        w => w.platform === 'Bank' || w.platform === 'bank' || !w.platform || w.platform === 'Unknown'
+      );
+
+      const dematBalance = dematWallets.reduce((sum, wallet) => {
+        const balance = wallet.balance || 0;
+        return wallet.currency === 'INR' ? sum + balance / 83 : sum + balance;
+      }, 0);
+
+      const bankBalance = bankWallets.reduce((sum, wallet) => sum + (wallet.balance || 0), 0);
+
+      return {
+        // Current wallet balances
+        currentWallets: {
+          dematWallet: {
+            balance: dematBalance,
+            currency: 'USD',
+            count: dematWallets.length,
+            wallets: dematWallets,
+          },
+          bankWallet: {
+            balance: bankBalance,
+            currency: 'INR',
+            count: bankWallets.length,
+            wallets: bankWallets,
+          },
+          totalBalance: {
+            USD: dematBalance,
+            INR: bankBalance,
+          },
+          recentActivity: safeWalletHistory.slice(0, 20),
+        },
+
+        // Financial data by timeframe
+        financialByTimeframe,
+
+        // Additional data
+        tradePnLProgress: safeTradePnLProgress,
+
+        // Metadata
+        requestedTimeframe: timeframe,
+        customDateRange: timeframe === 'CUSTOM' ? { customStartDate, customEndDate } : null,
+        year,
+        generatedAt: new Date().toISOString(),
+        supportedTimeframes: ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL', 'CUSTOM'],
+      };
+    } catch (error) {
+      console.error('Error in getConsolidatedDashboard:', error);
+      return {
+        currentWallets: {
+          dematWallet: { balance: 0, currency: 'USD', count: 0, wallets: [] },
+          bankWallet: { balance: 0, currency: 'INR', count: 0, wallets: [] },
+          totalBalance: { USD: 0, INR: 0 },
+          recentActivity: [],
+        },
+        financialByTimeframe: {},
+        tradePnLProgress: null,
+        requestedTimeframe: timeframe,
+        customDateRange: timeframe === 'CUSTOM' ? { customStartDate, customEndDate } : null,
+        year,
+        generatedAt: new Date().toISOString(),
+        supportedTimeframes: ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL', 'CUSTOM'],
+        error: 'Failed to fetch dashboard data',
       };
     }
   }
