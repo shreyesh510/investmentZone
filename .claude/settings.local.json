@@ -19,7 +19,8 @@
       "Bash(npm cache clean:*)",
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
