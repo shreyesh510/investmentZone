@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { TradingPnL, TradingWallet, DailySummary, WalletBalance } from '../../types/trading';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
