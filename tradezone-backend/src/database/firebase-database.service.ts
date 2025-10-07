@@ -6,7 +6,6 @@ import {
   UserPermissions,
   DEFAULT_USER_PERMISSIONS,
 } from '../auth/entities/permission.entity';
-import { Position } from '../positions/entities/position.entity';
 
 export interface User {
   id: string;
@@ -304,6 +303,7 @@ export class FirebaseDatabaseService {
     }
   }
 
+/*
   // Position operations
   async getPositions(userId: string): Promise<Position[]> {
     try {
@@ -517,7 +517,7 @@ export class FirebaseDatabaseService {
   }
 
   // New: get all open positions across all users (for cron jobs)
-  async getAllOpenPositions(): Promise<Position[]> {
+  async getAllOpenanys(): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.positionsCollection)
@@ -527,7 +527,7 @@ export class FirebaseDatabaseService {
       return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as any),
-      })) as Position[];
+      })) as any[];
     } catch (error) {
       console.error('Error getting all open positions:', error);
       return [];
@@ -535,7 +535,7 @@ export class FirebaseDatabaseService {
   }
 
   // New: batch update currentPrice by symbol for open positions
-  async updatePositionsCurrentPriceBySymbol(
+  async updateanysCurrentPriceBySymbol(
     symbol: string,
     price: number,
   ): Promise<number> {
@@ -564,7 +564,7 @@ export class FirebaseDatabaseService {
       return 0;
     }
   }
-  async getOpenPositions(userId: string): Promise<Position[]> {
+  async getOpenanys(userId: string): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.positionsCollection)
@@ -576,14 +576,14 @@ export class FirebaseDatabaseService {
       return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Position[];
+      })) as any[];
     } catch (error) {
       console.error('Error getting open positions:', error);
       return [];
     }
   }
 
-  async getClosedPositions(userId: string): Promise<Position[]> {
+  async getClosedanys(userId: string): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.positionsCollection)
@@ -595,21 +595,21 @@ export class FirebaseDatabaseService {
       return snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Position[];
+      })) as any[];
     } catch (error) {
       console.error('Error getting closed positions:', error);
       return [];
     }
   }
 
-  async createPositionsBatch(
-    positions: Array<Omit<Position, 'id'>>,
-  ): Promise<Position[]> {
+  async createanysBatch(
+    positions: Array<Omit<any, 'id'>>,
+  ): Promise<any[]> {
     if (!positions || positions.length === 0) return [];
 
     const db = this.getFirestore();
     const batch = db.batch();
-    const created: Position[] = [];
+    const created: any[] = [];
 
     for (const p of positions) {
       const docRef = db.collection(this.positionsCollection).doc();
@@ -620,7 +620,7 @@ export class FirebaseDatabaseService {
         updatedAt: p.updatedAt ?? now,
       } as any;
       batch.set(docRef, data);
-      created.push({ id: docRef.id, ...data } as Position);
+      created.push({ id: docRef.id, ...data } as any);
     }
 
     await batch.commit();
@@ -1058,7 +1058,7 @@ export class FirebaseDatabaseService {
    */
   async createPositionImported(
     userId: string,
-    data: Partial<import('../positions/entities/position.entity').Position> & {
+    data: Partial<any> & {
       importKey: string;
     },
   ): Promise<{ created: boolean; id: string }> {
@@ -1111,7 +1111,7 @@ export class FirebaseDatabaseService {
   async createPositionsBulk(
     userId: string,
     items: Array<
-      Partial<import('../positions/entities/position.entity').Position> & {
+      Partial<any> & {
         date?: any;
       }
     >,
@@ -1294,7 +1294,7 @@ export class FirebaseDatabaseService {
   // Create an exit entry for a single closed position
   async createExitEntrySingle(params: {
     userId: string;
-    position: Position;
+    position: any;
     pnl: number;
     closedAt?: Date;
   }): Promise<string | null> {
@@ -1360,7 +1360,7 @@ export class FirebaseDatabaseService {
   }
 
   // Close all open positions for a specific user; returns number of updated docs
-  async closeAllOpenPositionsForUser(userId: string): Promise<number> {
+  async closeAllOpenanysForUser(userId: string): Promise<number> {
     try {
       const db = this.getFirestore();
       const snapshot = await db
@@ -1396,7 +1396,7 @@ export class FirebaseDatabaseService {
   }
 
   // Close all open positions for a specific user and symbol; returns number of updated docs
-  async closeOpenPositionsBySymbolForUser(
+  async closeOpenanysBySymbolForUser(
     userId: string,
     symbol: string,
   ): Promise<number> {
@@ -1566,6 +1566,7 @@ export class FirebaseDatabaseService {
     }
   }
 
+/*
   // Trade Rules operations
   async createTradeRule(
     data: Omit<import('../trade-rules/entities/trade-rule.entity').TradeRule, 'id'>,
@@ -1752,6 +1753,7 @@ export class FirebaseDatabaseService {
       return [];
     }
   }
+*/
 
   // PnL Limits methods
   async getPnlLimits(userId: string): Promise<any> {
