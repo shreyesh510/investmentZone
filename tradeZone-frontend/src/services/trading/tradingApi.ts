@@ -19,8 +19,9 @@ export const tradingPnLApi = {
     return response.data;
   },
 
-  getAll: async (): Promise<TradingPnL[]> => {
-    const response = await axios.get(`${API_BASE_URL}/trading/pnl`, getAuthHeaders());
+  getAll: async (date?: string): Promise<TradingPnL[]> => {
+    const url = date ? `${API_BASE_URL}/trading/pnl?date=${date}` : `${API_BASE_URL}/trading/pnl`;
+    const response = await axios.get(url, getAuthHeaders());
     return response.data;
   },
 

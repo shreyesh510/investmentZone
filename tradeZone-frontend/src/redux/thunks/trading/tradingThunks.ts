@@ -5,9 +5,9 @@ import type { TradingPnL, TradingWallet, DailySummary, WalletBalance } from '../
 // Trading P&L Thunks
 export const fetchTradingPnL = createAsyncThunk(
   'trading/fetchPnL',
-  async (_, { rejectWithValue }) => {
+  async (date?: string, { rejectWithValue }) => {
     try {
-      const data = await tradingPnLApi.getAll();
+      const data = await tradingPnLApi.getAll(date);
       return data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch trading P&L');

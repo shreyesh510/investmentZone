@@ -104,26 +104,22 @@ const Trading = memo(function Trading() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load data
+  // Load data based on selected date
   useEffect(() => {
-    dispatch(fetchTradingPnL());
+    dispatch(fetchTradingPnL(dateFilter));
     dispatch(fetchTradingWallets());
     dispatch(fetchWalletBalance());
     if (selectedDate) {
       dispatch(fetchDailySummary(selectedDate));
     }
-  }, [dispatch, selectedDate]);
+  }, [dispatch, dateFilter, selectedDate]);
 
   // Get unique users and symbols
   const uniqueUsers = Array.from(new Set(pnlList.map(p => p.userName)));
   const uniqueSymbols = Array.from(new Set(pnlList.map(p => p.symbol)));
 
-  // Filter P&L by selected date, user, symbol, and search query
+  // Filter P&L by user, symbol, and search query (date filtering is done on backend)
   const filteredPnL = pnlList.filter(p => {
-    // Filter by selected date
-    const pnlDate = p.date.split('T')[0]; // Get date part only
-    if (pnlDate !== dateFilter) return false;
-
     // User filter
     if (userFilter !== 'all' && p.userName !== userFilter) return false;
 
@@ -176,16 +172,16 @@ const Trading = memo(function Trading() {
       setPnlFormData({
         symbol: 'XAUUSD',
         pnl: 0,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         notes: '',
       });
       setCommonFields({
         symbol: 'XAUUSD',
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         notes: '',
       });
       setPnlAmounts([0]);
-      dispatch(fetchTradingPnL());
+      dispatch(fetchTradingPnL(dateFilter));
       dispatch(fetchDailySummary(selectedDate));
     } catch (err: any) {
       toast.error(err || 'Failed to save P&L entry');
@@ -322,11 +318,11 @@ const Trading = memo(function Trading() {
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className={`px-4 py-2 rounded-lg w-full sm:w-auto ${
+            className={`px-3 py-2 rounded-lg text-sm ${
               isDarkMode
                 ? 'bg-gray-700 text-white border border-gray-600'
                 : 'bg-white text-gray-900 border border-gray-300'
-            }`}
+            } w-full sm:w-auto max-w-[200px]`}
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
