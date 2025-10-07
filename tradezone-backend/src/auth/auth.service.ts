@@ -48,7 +48,7 @@ export class AuthService {
     );
 
     // Generate JWT token
-    const payload = { sub: newUser.id, email: newUser.email };
+    const payload = { sub: newUser.id, email: newUser.email, name: newUser.name };
     const token = this.jwtService.sign(payload);
 
     // Create default permissions for new user
@@ -131,7 +131,7 @@ export class AuthService {
       }
 
       // Generate JWT token
-      const payload = { sub: user.id, email: user.email };
+      const payload = { sub: user.id, email: user.email, name: user.name };
       const token = this.jwtService.sign(payload);
 
       // Fetch user permissions
