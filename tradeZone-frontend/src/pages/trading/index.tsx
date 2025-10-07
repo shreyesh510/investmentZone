@@ -34,11 +34,15 @@ const Trading = memo(function Trading() {
     error,
   } = useSelector((state: RootState) => state.trading);
 
+  const currentUser = useSelector((state: RootState) => state.auth.user);
+
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
   const [userFilter, setUserFilter] = useState<string>('all');
+  const [symbolFilter, setSymbolFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // P&L Form State
   const [showPnLModal, setShowPnLModal] = useState(false);
@@ -102,13 +106,31 @@ const Trading = memo(function Trading() {
     }
   }, [dispatch, selectedDate]);
 
-  // Filter P&L by user
-  const filteredPnL = userFilter === 'all'
-    ? pnlList
-    : pnlList.filter(p => p.userName === userFilter);
-
-  // Get unique users
+  // Get unique users and symbols
   const uniqueUsers = Array.from(new Set(pnlList.map(p => p.userName)));
+  const uniqueSymbols = Array.from(new Set(pnlList.map(p => p.symbol)));
+
+  // Filter P&L by user, symbol, and search query
+  const filteredPnL = pnlList.filter(p => {
+    // User filter
+    if (userFilter !== 'all' && p.userName !== userFilter) return false;
+
+    // Symbol filter
+    if (symbolFilter !== 'all' && p.symbol !== symbolFilter) return false;
+
+    // Search query (searches in user, symbol, pnl, notes)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesUser = p.userName.toLowerCase().includes(query);
+      const matchesSymbol = p.symbol.toLowerCase().includes(query);
+      const matchesPnl = p.pnl.toString().includes(query);
+      const matchesNotes = p.notes?.toLowerCase().includes(query) || false;
+
+      if (!matchesUser && !matchesSymbol && !matchesPnl && !matchesNotes) return false;
+    }
+
+    return true;
+  });
 
   // Calculate filtered summary based on user filter
   const filteredSummary = {
@@ -320,8 +342,18 @@ const Trading = memo(function Trading() {
               </button>
             </div>
 
-            {/* User Filter */}
-            <div className="mb-4">
+            {/* Filters */}
+            <div className="mb-4 flex flex-col md:flex-row gap-3">
+              {/* Search Box */}
+              <input
+                type="text"
+                placeholder="Search by user, symbol, P&L, or notes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-gray-700 text-white px-4 py-2 rounded"
+              />
+
+              {/* User Filter */}
               <select
                 value={userFilter}
                 onChange={(e) => setUserFilter(e.target.value)}
@@ -334,6 +366,34 @@ const Trading = memo(function Trading() {
                   </option>
                 ))}
               </select>
+
+              {/* Symbol Filter */}
+              <select
+                value={symbolFilter}
+                onChange={(e) => setSymbolFilter(e.target.value)}
+                className="bg-gray-700 text-white px-4 py-2 rounded w-full md:w-auto"
+              >
+                <option value="all">All Symbols</option>
+                {uniqueSymbols.map((symbol) => (
+                  <option key={symbol} value={symbol}>
+                    {symbol}
+                  </option>
+                ))}
+              </select>
+
+              {/* Clear Filters Button */}
+              {(searchQuery || userFilter !== 'all' || symbolFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setUserFilter('all');
+                    setSymbolFilter('all');
+                  }}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded whitespace-nowrap"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
 
             {/* P&L List */}
@@ -358,18 +418,24 @@ const Trading = memo(function Trading() {
                         ${pnl.pnl.toLocaleString()}
                       </td>
                       <td className="p-3 text-center space-x-2">
-                        <button
-                          onClick={() => openEditPnL(pnl)}
-                          className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeletePnL(pnl.id)}
-                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
-                        >
-                          Delete
-                        </button>
+                        {currentUser && (pnl.userName === currentUser.name || pnl.userName === currentUser.email) ? (
+                          <>
+                            <button
+                              onClick={() => openEditPnL(pnl)}
+                              className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeletePnL(pnl.id)}
+                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-gray-500 text-sm">View Only</span>
+                        )}
                       </td>
                     </tr>
                   ))}
