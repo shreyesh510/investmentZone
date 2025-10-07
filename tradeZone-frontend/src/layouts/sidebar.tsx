@@ -40,23 +40,11 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
 
-  const goToChart = () => {
-    navigate('/chart');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
-
   // Investment submenu navigation functions
   const goToInvestmentDashboard = () => {
     navigate('/investment/dashboard');
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
-
-  const goToPositions = () => {
-    navigate('/investment/positions');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
-
-
 
   const goToWithdraw = () => {
     navigate('/investment/withdraw');
@@ -75,11 +63,6 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
 
   const goToTradePnL = () => {
     navigate('/investment/tradePnl');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
-
-  const goToTradeRules = () => {
-    navigate('/investment/tradeRules');
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
 
@@ -209,73 +192,9 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
             </div>
           </button>
 
-          {/* Chart Option */}
-          <button
-            onClick={goToChart}
-            className={`flex items-center transition-all duration-200 w-full relative ${
-              isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-            } ${
-              isActivePath('/chart')
-                ? isDarkMode
-                  ? 'bg-gray-700 border-l-4 border-blue-400'
-                  : 'bg-gray-50 border-l-4 border-blue-500'
-                : isDarkMode
-                  ? 'bg-transparent hover:bg-gray-700'
-                  : 'bg-transparent hover:bg-gray-100'
-            }`}
-            title={!isOpen ? 'Chart' : ''}
-          >
-            <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-              <svg className={`w-5 h-5 flex-shrink-0 ${
-                isActivePath('/chart')
-                  ? isDarkMode
-                    ? 'text-blue-400'
-                    : 'text-blue-600'
-                  : isDarkMode
-                    ? 'text-gray-400'
-                    : 'text-gray-600'
-              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Chart</span>}
-            </div>
-          </button>
-
           {/* Other Investment Options - Only show if user has permission */}
           {canAccessInvestment() && (
             <>
-              {/* Positions */}
-              <button
-                onClick={goToPositions}
-                className={`flex items-center transition-all duration-200 w-full relative ${
-                  isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-                } ${
-                  isActivePath('/investment/positions')
-                    ? isDarkMode
-                      ? 'bg-gray-700 border-l-4 border-green-400'
-                      : 'bg-gray-50 border-l-4 border-green-500'
-                    : isDarkMode
-                      ? 'bg-transparent hover:bg-gray-700'
-                      : 'bg-transparent hover:bg-gray-100'
-                }`}
-                title={!isOpen ? 'Positions' : ''}
-              >
-                <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-                  <svg className={`w-5 h-5 flex-shrink-0 ${
-                    isActivePath('/investment/positions')
-                      ? isDarkMode
-                        ? 'text-green-400'
-                        : 'text-green-600'
-                      : isDarkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-600'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Positions</span>}
-                </div>
-              </button>
-
               {/* Withdraw */}
               <button
                 onClick={goToWithdraw}
@@ -401,38 +320,6 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Trade P&L</span>}
-                </div>
-              </button>
-
-              {/* Trade Rules */}
-              <button
-                onClick={goToTradeRules}
-                className={`flex items-center transition-all duration-200 w-full relative ${
-                  isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-                } ${
-                  isActivePath('/investment/tradeRules')
-                    ? isDarkMode
-                      ? 'bg-gray-700 border-l-4 border-indigo-400'
-                      : 'bg-gray-50 border-l-4 border-indigo-500'
-                    : isDarkMode
-                      ? 'bg-transparent hover:bg-gray-700'
-                      : 'bg-transparent hover:bg-gray-100'
-                }`}
-                title={!isOpen ? 'Trade Rules' : ''}
-              >
-                <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-                  <svg className={`w-5 h-5 flex-shrink-0 ${
-                    isActivePath('/investment/tradeRules')
-                      ? isDarkMode
-                        ? 'text-indigo-400'
-                        : 'text-indigo-600'
-                      : isDarkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-600'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Trade Rules</span>}
                 </div>
               </button>
             </>
