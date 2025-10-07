@@ -22,8 +22,18 @@ export class TradingPnLService {
     );
   }
 
-  async findAll(): Promise<TradingPnL[]> {
-    return this.firebaseDatabaseService.getTradingPnL();
+  async findAll(date?: string): Promise<TradingPnL[]> {
+    const allTrades = await this.firebaseDatabaseService.getTradingPnL();
+
+    // If date is provided, filter by that date
+    if (date) {
+      return allTrades.filter(trade => {
+        const tradeDate = trade.date.split('T')[0]; // Get YYYY-MM-DD part
+        return tradeDate === date;
+      });
+    }
+
+    return allTrades;
   }
 
   async update(

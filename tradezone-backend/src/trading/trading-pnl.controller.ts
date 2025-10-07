@@ -28,8 +28,8 @@ export class TradingPnLController {
   }
 
   @Get()
-  findAll() {
-    return this.tradingPnLService.findAll();
+  findAll(@Query('date') date?: string) {
+    return this.tradingPnLService.findAll(date);
   }
 
   @Get('summary/daily')
