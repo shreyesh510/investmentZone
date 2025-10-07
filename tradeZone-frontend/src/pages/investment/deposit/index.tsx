@@ -229,10 +229,6 @@ const Deposit = memo(function Deposit() {
 
   const totalDeposits = filteredDeposits.reduce((sum, d) => sum + d.amount, 0);
 
-  // Statistics calculations
-  const avgDeposit = filteredDeposits.length > 0 ? totalDeposits / filteredDeposits.length : 0;
-  const maxDeposit = filteredDeposits.length > 0 ? Math.max(...filteredDeposits.map(d => d.amount)) : 0;
-
   // Calculate withdrawal total based on the same timeframe filter
   const calculateWithdrawalTotal = () => {
     if (!withdrawals || withdrawals.length === 0) return 0;
@@ -268,6 +264,12 @@ const Deposit = memo(function Deposit() {
     return totalDeposits - totalWithdrawals;
   };
 
+  // Calculate loan (withdrawal - deposit)
+  const calculateLoan = () => {
+    const totalWithdrawals = calculateWithdrawalTotal();
+    return totalWithdrawals - totalDeposits;
+  };
+
   const content = (
     <div className={`flex-1 p-3 sm:p-6 overflow-y-auto overflow-x-hidden ${
       isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
@@ -279,10 +281,10 @@ const Deposit = memo(function Deposit() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Deposit Funds
+              Loan
             </h1>
             <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Manage your fund deposits and track transaction history
+              Manage your loan deposits and track transaction history
             </p>
           </div>
           
@@ -386,9 +388,9 @@ const Deposit = memo(function Deposit() {
                     </svg>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Deposited ({selectedTimeFilter})</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Deposit</p>
                     <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${totalDeposits.toLocaleString()}
+                      {totalDeposits.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -398,33 +400,18 @@ const Deposit = memo(function Deposit() {
                 isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
               }`}>
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg. Deposit</p>
-                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${avgDeposit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Outstanding Loan</p>
+                    <p className={`text-2xl font-bold ${calculateLoan() > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                      {calculateLoan() > 0 ? '-' : ''}{Math.abs(calculateLoan()).toLocaleString()}
                     </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
-                isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
-              }`}>
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Largest Deposit</p>
-                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      ${maxDeposit.toLocaleString()}
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {calculateLoan() > 0 ? 'Withdrawals exceed deposits' : 'No outstanding loan'}
                     </p>
                   </div>
                 </div>
