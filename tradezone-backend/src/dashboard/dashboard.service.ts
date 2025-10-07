@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PositionsService } from '../positions/positions.service';
 import { WalletsService } from '../wallets/wallets.service';
 import { DepositsService } from '../deposits/deposits.service';
 import { WithdrawalsService } from '../withdrawals/withdrawals.service';
@@ -141,7 +140,6 @@ export class DashboardService {
     });
   }
   constructor(
-    private readonly positionsService: PositionsService,
     private readonly walletsService: WalletsService,
     private readonly depositsService: DepositsService,
     private readonly withdrawalsService: WithdrawalsService,
@@ -155,8 +153,6 @@ export class DashboardService {
     try {
       // Fetch all data in parallel for better performance with error handling
       const [
-        openPositions,
-        allPositions,
         wallets,
         deposits,
         withdrawals,
@@ -165,8 +161,6 @@ export class DashboardService {
         walletHistory,
         allTradePnL,
       ] = await Promise.allSettled([
-        this.positionsService.getOpenPositionsAggregated(userId),
-        this.positionsService.findAll(userId),
         this.walletsService.list(userId),
         this.depositsService.list(userId),
         this.withdrawalsService.list(userId),
@@ -177,10 +171,6 @@ export class DashboardService {
       ]);
 
       // Extract data with fallbacks for failed promises
-      const safeOpenPositions =
-        openPositions.status === 'fulfilled' ? openPositions.value : [];
-      const safeAllPositions =
-        allPositions.status === 'fulfilled' ? allPositions.value : [];
       const safeWallets = wallets.status === 'fulfilled' ? wallets.value : [];
       const safeDeposits =
         deposits.status === 'fulfilled' ? deposits.value : [];
@@ -195,15 +185,9 @@ export class DashboardService {
       const safeAllTradePnL =
         allTradePnL.status === 'fulfilled' ? allTradePnL.value : [];
 
-      // Process positions data
-      const totalPnL = safeOpenPositions.reduce(
-        (sum, pos) => sum + (pos.pnl || 0),
-        0,
-      );
-      const totalInvested = safeOpenPositions.reduce(
-        (sum, pos) => sum + (pos.investedAmount || 0),
-        0,
-      );
+      // Process positions data (removed - positions module deleted)
+      const totalPnL = 0;
+      const totalInvested = 0;
 
       // Process wallets data - separate by platform type
       const dematWallets = safeWallets.filter(
@@ -292,7 +276,7 @@ export class DashboardService {
 
       return {
         positions: {
-          totalPositions: safeAllPositions.length,
+          totalPositions: 0,
           totalInvested,
           totalPnL,
         },
@@ -911,54 +895,13 @@ export class DashboardService {
 
   // New separate API methods - optimized to return all timeframe data
   async getPositionsData(userId: string, timeframe: string = 'ALL') {
-    try {
-      const [openPositions, allPositions] = await Promise.allSettled([
-        this.positionsService.getOpenPositionsAggregated(userId),
-        this.positionsService.findAll(userId),
-      ]);
-
-      const safeOpenPositions =
-        openPositions.status === 'fulfilled' ? openPositions.value : [];
-      const safeAllPositions =
-        allPositions.status === 'fulfilled' ? allPositions.value : [];
-
-      // Calculate summary data from ALL open positions (current totals)
-      const totalPnL = safeOpenPositions.reduce(
-        (sum, pos) => sum + (pos.pnl || 0),
-        0,
-      );
-      const totalInvested = safeOpenPositions.reduce(
-        (sum, pos) => sum + (pos.investedAmount || 0),
-        0,
-      );
-
-      // Generate chart data for ALL timeframes at once
-      const chartData =
-        this.generatePositionsChartDataAllTimeframes(safeAllPositions);
-
-      return {
-        summary: {
-          totalPositions: safeOpenPositions.length,
-          totalInvested,
-          totalPnL,
-        },
-        chartData, // Contains all timeframe data
-        performance: {
-          dayChange: totalPnL * 0.1, // Mock calculation
-          percentChange:
-            totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0,
-        },
-        allTimeframeData: true, // Indicates this contains all timeframe data
-      };
-    } catch (error) {
-      console.error('Error in getPositionsData:', error);
-      return {
-        summary: { totalPositions: 0, totalInvested: 0, totalPnL: 0 },
-        chartData: { daily: [], weekly: [], monthly: [], yearly: [] },
-        performance: { dayChange: 0, percentChange: 0 },
-        allTimeframeData: true,
-      };
-    }
+    // Positions module removed - return empty data
+    return {
+      summary: { totalPositions: 0, totalInvested: 0, totalPnL: 0 },
+      chartData: { daily: [], weekly: [], monthly: [], yearly: [] },
+      performance: { dayChange: 0, percentChange: 0 },
+      allTimeframeData: true,
+    };
   }
 
   async getWalletsData(userId: string, timeframe: string = 'ALL') {
@@ -1579,7 +1522,6 @@ export class DashboardService {
     try {
       // Fetch all data in parallel
       const [
-        allPositions,
         allWallets,
         allDeposits,
         allWithdrawals,
@@ -1587,7 +1529,6 @@ export class DashboardService {
         walletHistory,
         tradePnLProgress,
       ] = await Promise.allSettled([
-        this.positionsService.findAll(userId),
         this.walletsService.list(userId),
         this.depositsService.list(userId),
         this.withdrawalsService.list(userId),
@@ -1597,7 +1538,6 @@ export class DashboardService {
       ]);
 
       // Extract data with fallbacks for failed promises
-      const safePositions = allPositions.status === 'fulfilled' ? allPositions.value : [];
       const safeWallets = allWallets.status === 'fulfilled' ? allWallets.value : [];
       const safeDeposits = allDeposits.status === 'fulfilled' ? allDeposits.value : [];
       const safeWithdrawals = allWithdrawals.status === 'fulfilled' ? allWithdrawals.value : [];
@@ -1626,7 +1566,6 @@ export class DashboardService {
         const filteredDeposits = this.filterByDateRange(safeDeposits, startDate, endDate);
         const filteredWithdrawals = this.filterByDateRange(safeWithdrawals, startDate, endDate);
         const filteredTradePnL = this.filterByDateRange(safeTradePnL, startDate, endDate);
-        const filteredPositions = this.filterByDateRange(safePositions, startDate, endDate);
 
         // Calculate deposits summary
         const totalDeposits = filteredDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
@@ -1646,12 +1585,12 @@ export class DashboardService {
         const winningTrades = filteredTradePnL.filter(t => (t.netPnL || 0) > 0).length;
         const losingTrades = filteredTradePnL.filter(t => (t.netPnL || 0) < 0).length;
 
-        // Calculate positions summary
-        const totalPositions = filteredPositions.length;
-        const openPositions = filteredPositions.filter(p => p.status === 'open').length;
-        const closedPositions = filteredPositions.filter(p => p.status === 'closed').length;
-        const totalInvested = filteredPositions.reduce((sum, p) => sum + (p.investedAmount || 0), 0);
-        const positionsPnL = filteredPositions.reduce((sum, p) => sum + (p.pnl || 0), 0);
+        // Calculate positions summary (removed - positions module deleted)
+        const totalPositions = 0;
+        const openPositions = 0;
+        const closedPositions = 0;
+        const totalInvested = 0;
+        const positionsPnL = 0;
 
         financialByTimeframe[tf] = {
           timeframe: tf,
@@ -1689,7 +1628,7 @@ export class DashboardService {
             closed: closedPositions,
             totalInvested,
             positionsPnL,
-            chartData: this.generatePositionsChartDataAllTimeframes(filteredPositions),
+            chartData: { daily: [], weekly: [], monthly: [], yearly: [] },
           },
           // Net cash flow calculation
           netCashFlow: totalDeposits - totalWithdrawals,

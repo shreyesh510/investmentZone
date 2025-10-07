@@ -6,13 +6,11 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 import { DatabaseModule } from './database/database.module';
-import { PositionsModule } from './positions/positions.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { DepositsModule } from './deposits/deposits.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TradePnLModule } from './trade-pnl/trade-pnl.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { TradeRulesModule } from './trade-rules/trade-rules.module';
 
 import { FirebaseDatabaseService } from './database/firebase-database.service';
 
@@ -21,13 +19,11 @@ import { FirebaseDatabaseService } from './database/firebase-database.service';
     AuthModule,
     ChatModule,
     DatabaseModule,
-    PositionsModule,
     WithdrawalsModule,
     DepositsModule,
     WalletsModule,
     TradePnLModule,
     DashboardModule,
-    TradeRulesModule,
   ],
   controllers: [AppController],
   providers: [

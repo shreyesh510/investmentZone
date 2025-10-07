@@ -2,15 +2,12 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import Login from '../pages/login';
 import Zone from '../pages/zone';
-import HeaderChart from '../pages/headerChart';
 import Settings from '../pages/settings';
-import Positions from '../pages/investment/positions';
 import InvestmentDashboard from '../pages/investment/dashboard';
 import Withdraw from '../pages/investment/withdraw';
 import Deposit from '../pages/investment/deposit';
 import WalletsPage from '../pages/investment/wallets';
 import TradePnL from '../pages/investment/tradePnl';
-import TradeRules from '../pages/investment/tradeRules';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
 
@@ -43,27 +40,7 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
       </ProtectedRoute>
     )
   },
-  {
-    path: '/chart',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <HeaderChart />
-        </AppLayout>
-      </ProtectedRoute>
-    )
-  },
   // Investment Routes
-  {
-    path: '/investment/positions',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <Positions />
-        </AppLayout>
-      </ProtectedRoute>
-    )
-  },
   {
     path: '/investment/dashboard',
     element: (
@@ -110,16 +87,6 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
       <ProtectedRoute>
         <AppLayout>
           <TradePnL />
-        </AppLayout>
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: '/investment/tradeRules',
-    element: (
-      <ProtectedRoute>
-        <AppLayout>
-          <TradeRules />
         </AppLayout>
       </ProtectedRoute>
     )
