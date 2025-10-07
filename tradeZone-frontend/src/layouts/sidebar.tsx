@@ -232,7 +232,7 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                 </div>
               </button>
 
-              {/* Deposit */}
+              {/* Loan */}
               <button
                 onClick={goToDeposit}
                 className={`flex items-center transition-all duration-200 w-full relative ${
@@ -246,7 +246,7 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                       ? 'bg-transparent hover:bg-gray-700'
                       : 'bg-transparent hover:bg-gray-100'
                 }`}
-                title={!isOpen ? 'Deposit' : ''}
+                title={!isOpen ? 'Loan' : ''}
               >
                 <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
                   <svg className={`w-5 h-5 flex-shrink-0 ${
@@ -260,7 +260,7 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                   }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
-                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Deposit</span>}
+                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Loan</span>}
                 </div>
               </button>
 

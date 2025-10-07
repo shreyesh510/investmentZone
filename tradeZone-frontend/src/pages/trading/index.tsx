@@ -19,6 +19,15 @@ import {
 } from '../../redux/thunks/trading/tradingThunks';
 import type { TradingPnL, TradingWallet } from '../../types/trading';
 
+// Helper function to get local date in YYYY-MM-DD format
+const getLocalDateString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Trading = memo(function Trading() {
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -37,12 +46,11 @@ const Trading = memo(function Trading() {
   const currentUser = useSelector((state: RootState) => state.auth.user);
 
   const [isMobile, setIsMobile] = useState<boolean>(false);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [userFilter, setUserFilter] = useState<string>('all');
   const [symbolFilter, setSymbolFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<string>(getLocalDateString());
 
   // P&L Form State
   const [showPnLModal, setShowPnLModal] = useState(false);
@@ -51,7 +59,7 @@ const Trading = memo(function Trading() {
   // Common fields for all entries
   const [commonFields, setCommonFields] = useState({
     symbol: 'XAUUSD',
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     notes: '',
   });
 
@@ -64,7 +72,7 @@ const Trading = memo(function Trading() {
   const [pnlFormData, setPnlFormData] = useState({
     symbol: 'XAUUSD',
     pnl: 0,
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     notes: '',
   });
 
@@ -110,8 +118,12 @@ const Trading = memo(function Trading() {
   const uniqueUsers = Array.from(new Set(pnlList.map(p => p.userName)));
   const uniqueSymbols = Array.from(new Set(pnlList.map(p => p.symbol)));
 
-  // Filter P&L by user, symbol, and search query
+  // Filter P&L by selected date, user, symbol, and search query
   const filteredPnL = pnlList.filter(p => {
+    // Filter by selected date
+    const pnlDate = p.date.split('T')[0]; // Get date part only
+    if (pnlDate !== dateFilter) return false;
+
     // User filter
     if (userFilter !== 'all' && p.userName !== userFilter) return false;
 
@@ -276,88 +288,185 @@ const Trading = memo(function Trading() {
     setShowWalletModal(true);
   };
 
-  return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-3xl font-bold mb-6">Trading Management</h1>
+  const isDarkMode = settings.theme === 'dark';
 
-      {/* Daily Summary Section */}
-      <div className="bg-gray-800 p-6 rounded-lg mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Daily Summary</h2>
+  return (
+    <div className={`flex-1 p-3 sm:p-6 overflow-y-auto overflow-x-hidden ${
+      isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
+    }`}>
+      {/* Page Header */}
+      <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border mb-6 sm:mb-8 ${
+        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Trading
+            </h1>
+            <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Track your daily trades and P&L performance
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Section */}
+      <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border mb-6 ${
+        isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+      }`}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Daily Summary
+          </h3>
           <input
             type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="bg-gray-700 text-white px-4 py-2 rounded"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className={`px-4 py-2 rounded-lg w-full sm:w-auto ${
+              isDarkMode
+                ? 'bg-gray-700 text-white border border-gray-600'
+                : 'bg-white text-gray-900 border border-gray-300'
+            }`}
           />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gray-700 p-4 rounded">
-            <p className="text-gray-400 text-sm">Total P&L</p>
-            <p className={`text-2xl font-bold ${filteredSummary.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              ${filteredSummary.totalPnL.toLocaleString()}
-            </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                filteredSummary.totalPnL >= 0
+                  ? 'bg-gradient-to-br from-green-500 to-emerald-500'
+                  : 'bg-gradient-to-br from-red-500 to-rose-500'
+              }`}>
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total P&L</p>
+                <p className={`text-2xl font-bold ${filteredSummary.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ${filteredSummary.totalPnL.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-gray-700 p-4 rounded">
-            <p className="text-gray-400 text-sm">Total Profit</p>
-            <p className="text-2xl font-bold text-green-400">
-              ${filteredSummary.totalProfit.toLocaleString()}
-            </p>
+
+          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M trending-up" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Profit</p>
+                <p className="text-2xl font-bold text-green-400">
+                  ${filteredSummary.totalProfit.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-gray-700 p-4 rounded">
-            <p className="text-gray-400 text-sm">Total Loss</p>
-            <p className="text-2xl font-bold text-red-400">
-              ${filteredSummary.totalLoss.toLocaleString()}
-            </p>
+
+          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-500 flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Loss</p>
+                <p className="text-2xl font-bold text-red-400">
+                  ${filteredSummary.totalLoss.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-gray-700 p-4 rounded">
-            <p className="text-gray-400 text-sm">Trades Count</p>
-            <p className="text-2xl font-bold">{filteredSummary.tradesCount}</p>
+
+          <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-700/30 border-gray-600/50' : 'bg-white/60 border-white/30'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Trades Count</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {filteredSummary.tradesCount}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content - 70/30 Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
         {/* Left Section - 70% */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="xl:col-span-8 space-y-4 sm:space-y-6">
           {/* P&L Section */}
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Trading P&L</h2>
+          <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Trades for {new Date(dateFilter).toLocaleDateString()}
+              </h2>
               <button
                 onClick={() => {
                   setEditPnLId(null);
                   setCommonFields({
                     symbol: 'XAUUSD',
-                    date: new Date().toISOString().split('T')[0],
+                    date: getLocalDateString(),
                     notes: '',
                   });
                   setPnlAmounts([0]);
                   setShowPnLModal(true);
                 }}
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-medium rounded-xl transition-all duration-300 hover:scale-105"
               >
-                + Add P&L
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add Trade</span>
+                </div>
               </button>
             </div>
 
             {/* Filters */}
-            <div className="mb-4 flex flex-col md:flex-row gap-3">
+            <div className="mb-4 flex flex-col sm:flex-row gap-3">
               {/* Search Box */}
               <input
                 type="text"
                 placeholder="Search by user, symbol, P&L, or notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-gray-700 text-white px-4 py-2 rounded"
+                className={`flex-1 px-4 py-2 rounded-lg ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white border border-gray-600'
+                    : 'bg-white text-gray-900 border border-gray-300'
+                }`}
               />
 
               {/* User Filter */}
               <select
                 value={userFilter}
                 onChange={(e) => setUserFilter(e.target.value)}
-                className="bg-gray-700 text-white px-4 py-2 rounded w-full md:w-auto"
+                className={`px-4 py-2 rounded-lg w-full sm:w-auto ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white border border-gray-600'
+                    : 'bg-white text-gray-900 border border-gray-300'
+                }`}
               >
                 <option value="all">All Users</option>
                 {uniqueUsers.map((user) => (
@@ -371,7 +480,11 @@ const Trading = memo(function Trading() {
               <select
                 value={symbolFilter}
                 onChange={(e) => setSymbolFilter(e.target.value)}
-                className="bg-gray-700 text-white px-4 py-2 rounded w-full md:w-auto"
+                className={`px-4 py-2 rounded-lg w-full sm:w-auto ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-white border border-gray-600'
+                    : 'bg-white text-gray-900 border border-gray-300'
+                }`}
               >
                 <option value="all">All Symbols</option>
                 {uniqueSymbols.map((symbol) => (
@@ -389,7 +502,11 @@ const Trading = memo(function Trading() {
                     setUserFilter('all');
                     setSymbolFilter('all');
                   }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded whitespace-nowrap"
+                  className={`px-4 py-2 rounded-lg whitespace-nowrap ${
+                    isDarkMode
+                      ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  }`}
                 >
                   Clear Filters
                 </button>
@@ -399,21 +516,31 @@ const Trading = memo(function Trading() {
             {/* P&L List */}
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-700">
+                <thead className={isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'}>
                   <tr>
-                    <th className="p-3 text-left">Date</th>
-                    <th className="p-3 text-left">User</th>
-                    <th className="p-3 text-left">Symbol</th>
-                    <th className="p-3 text-right">P&L</th>
-                    <th className="p-3 text-center">Actions</th>
+                    <th className={`p-3 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Date</th>
+                    <th className={`p-3 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>User</th>
+                    <th className={`p-3 text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Symbol</th>
+                    <th className={`p-3 text-right ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>P&L</th>
+                    <th className={`p-3 text-center ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredPnL.map((pnl) => (
-                    <tr key={pnl.id} className="border-b border-gray-700 hover:bg-gray-750">
-                      <td className="p-3">{new Date(pnl.date).toLocaleDateString()}</td>
-                      <td className="p-3">{pnl.userName}</td>
-                      <td className="p-3">{pnl.symbol}</td>
+                    <tr key={pnl.id} className={`border-b ${
+                      isDarkMode
+                        ? 'border-gray-700 hover:bg-gray-700/30'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}>
+                      <td className={`p-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {new Date(pnl.date).toLocaleDateString()}
+                      </td>
+                      <td className={`p-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {pnl.userName}
+                      </td>
+                      <td className={`p-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {pnl.symbol}
+                      </td>
                       <td className={`p-3 text-right font-bold ${pnl.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         ${pnl.pnl.toLocaleString()}
                       </td>
@@ -422,19 +549,21 @@ const Trading = memo(function Trading() {
                           <>
                             <button
                               onClick={() => openEditPnL(pnl)}
-                              className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded text-sm"
+                              className="bg-yellow-600 hover:bg-yellow-700 px-3 py-1 rounded-lg text-sm text-white transition-all"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleDeletePnL(pnl.id)}
-                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
+                              className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-sm text-white transition-all"
                             >
                               Delete
                             </button>
                           </>
                         ) : (
-                          <span className="text-gray-500 text-sm">View Only</span>
+                          <span className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            View Only
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -442,17 +571,23 @@ const Trading = memo(function Trading() {
                 </tbody>
               </table>
               {filteredPnL.length === 0 && (
-                <div className="text-center py-8 text-gray-400">No P&L entries found</div>
+                <div className={`text-center py-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  No trades found for {new Date(dateFilter).toLocaleDateString()}
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {/* Right Section - 30% */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="xl:col-span-4 space-y-4 sm:space-y-6">
           {/* Wallet Balance */}
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Wallet Balance</h2>
+          <div className={`p-4 sm:p-6 rounded-2xl backdrop-blur-lg border ${
+            isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
+          }`}>
+            <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Wallet Balance
+            </h2>
             {walletBalance && (
               <div className="bg-gray-700 p-4 rounded mb-4">
                 <p className="text-gray-400 text-sm">Total Balance</p>
