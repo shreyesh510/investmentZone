@@ -66,6 +66,11 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
 
+  const goToTrading = () => {
+    navigate('/trading');
+    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
+  };
+
   return (
     <>
       {/* Backdrop Overlay - Only on mobile */}
@@ -323,6 +328,40 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                 </div>
               </button>
             </>
+          )}
+
+          {/* Trading - Shared Section (visible to all users with investment access) */}
+          {canAccessInvestment() && (
+            <button
+              onClick={goToTrading}
+              className={`flex items-center transition-all duration-200 w-full relative ${
+                isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
+              } ${
+                isActivePath('/trading')
+                  ? isDarkMode
+                    ? 'bg-gray-700 border-l-4 border-cyan-400'
+                    : 'bg-gray-50 border-l-4 border-cyan-500'
+                  : isDarkMode
+                    ? 'bg-transparent hover:bg-gray-700'
+                    : 'bg-transparent hover:bg-gray-100'
+              }`}
+              title={!isOpen ? 'Trading' : ''}
+            >
+              <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
+                <svg className={`w-5 h-5 flex-shrink-0 ${
+                  isActivePath('/trading')
+                    ? isDarkMode
+                      ? 'text-cyan-400'
+                      : 'text-cyan-600'
+                    : isDarkMode
+                      ? 'text-gray-400'
+                      : 'text-gray-600'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Trading</span>}
+              </div>
+            </button>
           )}
 
         </div>

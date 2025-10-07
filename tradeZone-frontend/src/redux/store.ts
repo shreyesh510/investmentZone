@@ -9,6 +9,7 @@ import tradePnLReducer from './slices/tradePnLSlice';
 import pnlLimitsReducer from './slices/pnlLimitsSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import newDashboardReducer from './slices/newDashboardSlice';
+import tradingReducer from './slices/tradingSlice';
 
 export const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ export const store = configureStore({
     pnlLimits: pnlLimitsReducer,
     dashboard: dashboardReducer,
     newDashboard: newDashboardReducer,
+    trading: tradingReducer,
   },
 });
 

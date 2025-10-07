@@ -36,6 +36,11 @@ export class FirebaseDatabaseService {
   private tradeRulesCollection = 'tradeRules';
   private tradeRuleHistoryCollection = 'tradeRuleHistory';
   private pnlLimitsCollection = 'pnlLimits';
+  // Trading collections (shared across all users)
+  private tradingPnLCollection = 'tradingPnL';
+  private tradingWalletCollection = 'tradingWallet';
+  private tradingPnLHistoryCollection = 'tradingPnLHistory';
+  private tradingWalletHistoryCollection = 'tradingWalletHistory';
 
   constructor(private firebaseConfig: FirebaseConfig) {
     // Firestore will be initialized in onModuleInit
@@ -1797,6 +1802,359 @@ export class FirebaseDatabaseService {
     } catch (error) {
       console.error('Error updating pnl limits:', error);
       throw error;
+    }
+  }
+
+  // ==================== Trading P&L Operations (Shared) ====================
+  async createTradingPnL(
+    userId: string,
+    userName: string,
+    data: Omit<import('../trading/entities/trading-pnl.entity').TradingPnL, 'id' | 'userId' | 'userName' | 'createdAt' | 'updatedAt'>,
+  ): Promise<import('../trading/entities/trading-pnl.entity').TradingPnL> {
+    try {
+      const db = this.getFirestore();
+      const now = new Date();
+      const raw = {
+        userId,
+        userName,
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      const docRef = await db.collection(this.tradingPnLCollection).add(payload);
+      const createdAt = this.serializeDate(payload.createdAt);
+      const updatedAt = this.serializeDate(payload.updatedAt);
+
+      // Add to history
+      try {
+        await db.collection(this.tradingPnLHistoryCollection).add({
+          tradingPnLId: docRef.id,
+          userId,
+          userName,
+          action: 'create',
+          data: payload,
+          createdAt: now,
+        });
+      } catch (e) {
+        console.warn('Failed to write trading PnL history:', e);
+      }
+
+      return {
+        id: docRef.id,
+        ...(payload as any),
+        createdAt,
+        updatedAt,
+      };
+    } catch (error) {
+      console.error('Error creating trading P&L:', error);
+      throw error;
+    }
+  }
+
+  async getTradingPnL(): Promise<import('../trading/entities/trading-pnl.entity').TradingPnL[]> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection(this.tradingPnLCollection)
+        .get();
+      const items = snapshot.docs.map((d) => {
+        const data = d.data() as any;
+        const createdAt = this.serializeDate(data.createdAt);
+        const updatedAt = this.serializeDate(data.updatedAt);
+        return { id: d.id, ...data, createdAt, updatedAt };
+      });
+      return items.sort((a, b) => {
+        const aDate = a.date ? new Date(a.date).getTime() : 0;
+        const bDate = b.date ? new Date(b.date).getTime() : 0;
+        if (aDate !== bDate) {
+          return bDate - aDate;
+        }
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bCreated - aCreated;
+      }) as any;
+    } catch (error) {
+      console.error('Error getting trading P&L:', error);
+      return [] as any;
+    }
+  }
+
+  async updateTradingPnL(
+    id: string,
+    userId: string,
+    data: Partial<import('../trading/entities/trading-pnl.entity').TradingPnL>,
+  ): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradingPnLCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+      const existing = snap.data() as any;
+
+      // Only the creator can update
+      if (!existing || existing.userId !== userId) return false;
+
+      const raw = { ...data, updatedAt: new Date() } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      await ref.update(payload);
+
+      // Add to history
+      try {
+        await db.collection(this.tradingPnLHistoryCollection).add({
+          tradingPnLId: id,
+          userId,
+          userName: existing.userName,
+          action: 'update',
+          data: payload,
+          createdAt: new Date(),
+        });
+      } catch (e) {
+        console.warn('Failed to write trading PnL history:', e);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating trading P&L:', error);
+      return false;
+    }
+  }
+
+  async deleteTradingPnL(id: string, userId: string): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradingPnLCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+      const existing = snap.data() as any;
+
+      // Only the creator can delete
+      if (!existing || existing.userId !== userId) return false;
+
+      await ref.delete();
+
+      // Add to history
+      try {
+        await db.collection(this.tradingPnLHistoryCollection).add({
+          tradingPnLId: id,
+          userId,
+          userName: existing.userName,
+          action: 'delete',
+          data: existing,
+          createdAt: new Date(),
+        });
+      } catch (e) {
+        console.warn('Failed to write trading PnL history:', e);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting trading P&L:', error);
+      return false;
+    }
+  }
+
+  // ==================== Trading Wallet Operations (Shared) ====================
+  async createTradingWallet(
+    data: Omit<import('../trading/entities/trading-wallet.entity').TradingWallet, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<import('../trading/entities/trading-wallet.entity').TradingWallet> {
+    try {
+      const db = this.getFirestore();
+      const now = new Date();
+      const raw = { ...data, createdAt: now, updatedAt: now } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      const docRef = await db.collection(this.tradingWalletCollection).add(payload);
+      const createdAt = this.serializeDate(payload.createdAt);
+      const updatedAt = this.serializeDate(payload.updatedAt);
+
+      // Add to history
+      try {
+        await db.collection(this.tradingWalletHistoryCollection).add({
+          tradingWalletId: docRef.id,
+          action: 'create',
+          data: payload,
+          createdAt: now,
+        });
+      } catch (e) {
+        console.warn('Failed to write trading wallet history:', e);
+      }
+
+      return {
+        id: docRef.id,
+        ...(payload as any),
+        createdAt,
+        updatedAt,
+      };
+    } catch (error) {
+      console.error('Error creating trading wallet:', error);
+      throw error;
+    }
+  }
+
+  async getTradingWallets(): Promise<import('../trading/entities/trading-wallet.entity').TradingWallet[]> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection(this.tradingWalletCollection)
+        .get();
+      const items = snapshot.docs.map((d) => {
+        const data = d.data() as any;
+        const createdAt = this.serializeDate(data.createdAt);
+        const updatedAt = this.serializeDate(data.updatedAt);
+        return { id: d.id, ...data, createdAt, updatedAt };
+      });
+      return items.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      }) as any;
+    } catch (error) {
+      console.error('Error getting trading wallets:', error);
+      return [] as any;
+    }
+  }
+
+  async updateTradingWallet(
+    id: string,
+    data: Partial<import('../trading/entities/trading-wallet.entity').TradingWallet>,
+  ): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradingWalletCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+
+      const raw = { ...data, updatedAt: new Date() } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      await ref.update(payload);
+
+      // Add to history
+      try {
+        const existing = snap.data() as any;
+        await db.collection(this.tradingWalletHistoryCollection).add({
+          tradingWalletId: id,
+          action: 'update',
+          data: payload,
+          previousData: existing,
+          createdAt: new Date(),
+        });
+      } catch (e) {
+        console.warn('Failed to write trading wallet history:', e);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating trading wallet:', error);
+      return false;
+    }
+  }
+
+  async deleteTradingWallet(id: string): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.tradingWalletCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+
+      const existing = snap.data() as any;
+      await ref.delete();
+
+      // Add to history
+      try {
+        await db.collection(this.tradingWalletHistoryCollection).add({
+          tradingWalletId: id,
+          action: 'delete',
+          data: existing,
+          createdAt: new Date(),
+        });
+      } catch (e) {
+        console.warn('Failed to write trading wallet history:', e);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting trading wallet:', error);
+      return false;
+    }
+  }
+
+  async getTradingPnLHistory(limit = 50): Promise<any[]> {
+    try {
+      const db = this.getFirestore();
+      const snapshot = await db
+        .collection(this.tradingPnLHistoryCollection)
+        .get();
+
+      const history = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: this.serializeDate(data.createdAt),
+        };
+      });
+
+      history.sort((a, b) => {
+        const timestampA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timestampB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timestampB - timestampA;
+      });
+
+      return history.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting trading PnL history:', error);
+      return [];
+    }
+  }
+
+  async getTradingWalletHistory(limit = 50): Promise<any[]> {
+    try {
+      const db = this.getFirestore();
+      const snapshot = await db
+        .collection(this.tradingWalletHistoryCollection)
+        .get();
+
+      const history = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: this.serializeDate(data.createdAt),
+        };
+      });
+
+      history.sort((a, b) => {
+        const timestampA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timestampB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timestampB - timestampA;
+      });
+
+      return history.slice(0, limit);
+    } catch (error) {
+      console.error('Error getting trading wallet history:', error);
+      return [];
     }
   }
 }

@@ -8,6 +8,7 @@ import Withdraw from '../pages/investment/withdraw';
 import Deposit from '../pages/investment/deposit';
 import WalletsPage from '../pages/investment/wallets';
 import TradePnL from '../pages/investment/tradePnl';
+import Trading from '../pages/trading';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
 
@@ -87,6 +88,16 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
       <ProtectedRoute>
         <AppLayout>
           <TradePnL />
+        </AppLayout>
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/trading',
+    element: (
+      <ProtectedRoute>
+        <AppLayout>
+          <Trading />
         </AppLayout>
       </ProtectedRoute>
     )
