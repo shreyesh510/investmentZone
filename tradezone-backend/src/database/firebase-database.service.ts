@@ -946,10 +946,10 @@ export class FirebaseDatabaseService {
     }
   }
 
-  // Wallets operations
+  // Wallets operations (wallet module removed - kept for compatibility)
   async createWallet(
-    data: Omit<import('../wallets/entities/wallet.entity').Wallet, 'id'>,
-  ): Promise<import('../wallets/entities/wallet.entity').Wallet> {
+    data: any,
+  ): Promise<any> {
     try {
       const db = this.getFirestore();
       const now = data.createdAt ?? new Date();
@@ -1162,7 +1162,7 @@ export class FirebaseDatabaseService {
 
   async getWallets(
     userId: string,
-  ): Promise<import('../wallets/entities/wallet.entity').Wallet[]> {
+  ): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.walletsCollection)
@@ -1188,7 +1188,7 @@ export class FirebaseDatabaseService {
   async updateWallet(
     userId: string,
     id: string,
-    data: Partial<import('../wallets/entities/wallet.entity').Wallet>,
+    data: any,
   ): Promise<boolean> {
     try {
       const db = this.getFirestore();
@@ -1443,8 +1443,8 @@ export class FirebaseDatabaseService {
 
   // Trade P&L operations
   async createTradePnL(
-    data: Omit<import('../trade-pnl/trade-pnl.service').TradePnL, 'id'>,
-  ): Promise<import('../trade-pnl/trade-pnl.service').TradePnL> {
+    data: any,
+  ): Promise<any> {
     try {
       const db = this.getFirestore();
       const now = data.createdAt ?? new Date();
@@ -1476,7 +1476,7 @@ export class FirebaseDatabaseService {
 
   async getTradePnL(
     userId: string,
-  ): Promise<import('../trade-pnl/trade-pnl.service').TradePnL[]> {
+  ): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.tradePnLCollection)
@@ -1510,7 +1510,7 @@ export class FirebaseDatabaseService {
   async updateTradePnL(
     userId: string,
     id: string,
-    data: Partial<import('../trade-pnl/trade-pnl.service').TradePnL>,
+    data: any,
   ): Promise<boolean> {
     try {
       const db = this.getFirestore();
@@ -1554,7 +1554,7 @@ export class FirebaseDatabaseService {
   async getTradePnLById(
     userId: string,
     id: string,
-  ): Promise<import('../trade-pnl/trade-pnl.service').TradePnL | null> {
+  ): Promise<any | null> {
     try {
       const db = this.getFirestore();
       const ref = db.collection(this.tradePnLCollection).doc(id);
@@ -1809,8 +1809,8 @@ export class FirebaseDatabaseService {
   async createTradingPnL(
     userId: string,
     userName: string,
-    data: Omit<import('../trading/entities/trading-pnl.entity').TradingPnL, 'id' | 'userId' | 'userName' | 'createdAt' | 'updatedAt'>,
-  ): Promise<import('../trading/entities/trading-pnl.entity').TradingPnL> {
+    data: any,
+  ): Promise<any> {
     try {
       const db = this.getFirestore();
       const now = new Date();
@@ -1858,7 +1858,7 @@ export class FirebaseDatabaseService {
     }
   }
 
-  async getTradingPnL(): Promise<import('../trading/entities/trading-pnl.entity').TradingPnL[]> {
+  async getTradingPnL(): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.tradingPnLCollection)
@@ -1888,7 +1888,7 @@ export class FirebaseDatabaseService {
   async updateTradingPnL(
     id: string,
     userId: string,
-    data: Partial<import('../trading/entities/trading-pnl.entity').TradingPnL>,
+    data: any,
   ): Promise<boolean> {
     try {
       const db = this.getFirestore();
@@ -1967,8 +1967,8 @@ export class FirebaseDatabaseService {
 
   // ==================== Trading Wallet Operations (Shared) ====================
   async createTradingWallet(
-    data: Omit<import('../trading/entities/trading-wallet.entity').TradingWallet, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<import('../trading/entities/trading-wallet.entity').TradingWallet> {
+    data: any,
+  ): Promise<any> {
     try {
       const db = this.getFirestore();
       const now = new Date();
@@ -2008,7 +2008,7 @@ export class FirebaseDatabaseService {
     }
   }
 
-  async getTradingWallets(): Promise<import('../trading/entities/trading-wallet.entity').TradingWallet[]> {
+  async getTradingWallets(): Promise<any[]> {
     try {
       const snapshot = await this.getFirestore()
         .collection(this.tradingWalletCollection)
@@ -2032,7 +2032,7 @@ export class FirebaseDatabaseService {
 
   async updateTradingWallet(
     id: string,
-    data: Partial<import('../trading/entities/trading-wallet.entity').TradingWallet>,
+    data: any,
   ): Promise<boolean> {
     try {
       const db = this.getFirestore();

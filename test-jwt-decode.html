@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JWT Token Decoder</title>
+</head>
+<body>
+    <h1>JWT Token Decoder</h1>
+    <p>Open browser console (F12) to see the decoded token</p>
+    <script>
+        const token = localStorage.getItem('token');
+        const testToken = localStorage.getItem('testToken');
+
+        console.log('=== TOKEN INFORMATION ===');
+        console.log('JWT Token:', token);
+        console.log('Test Token:', testToken);
+
+        if (token) {
+            try {
+                const parts = token.split('.');
+                const payload = JSON.parse(atob(parts[1]));
+                console.log('\n=== DECODED JWT PAYLOAD ===');
+                console.log(payload);
+                console.log('\nHas "name" field?', 'name' in payload);
+                console.log('Has "sub" field?', 'sub' in payload);
+                console.log('Has "email" field?', 'email' in payload);
+            } catch (e) {
+                console.error('Error decoding JWT:', e);
+            }
+        } else {
+            console.log('No JWT token found in localStorage');
+        }
+
+        // Also show user info
+        const user = localStorage.getItem('user');
+        if (user) {
+            console.log('\n=== USER INFO ===');
+            console.log(JSON.parse(user));
+        }
+    </script>
+</body>
+</html>
