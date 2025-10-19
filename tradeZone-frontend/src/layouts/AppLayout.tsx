@@ -14,7 +14,7 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children, onlineUsers = [] }: AppLayoutProps) => {
   const { settings } = useSettings();
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Start collapsed
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Start open
   const [isMobile, setIsMobile] = useState(false);
 
   const toggleSidebar = () => {

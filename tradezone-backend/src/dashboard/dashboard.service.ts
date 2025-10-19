@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { WalletsService } from '../wallets/wallets.service';
 import { DepositsService } from '../deposits/deposits.service';
 import { WithdrawalsService } from '../withdrawals/withdrawals.service';
-import { TradePnLService } from '../trade-pnl/trade-pnl.service';
 
 export interface DashboardSummary {
   positions: {
@@ -140,10 +138,8 @@ export class DashboardService {
     });
   }
   constructor(
-    private readonly walletsService: WalletsService,
     private readonly depositsService: DepositsService,
     private readonly withdrawalsService: WithdrawalsService,
-    private readonly tradePnLService: TradePnLService,
   ) {}
 
   async getDashboardSummary(
@@ -153,37 +149,23 @@ export class DashboardService {
     try {
       // Fetch all data in parallel for better performance with error handling
       const [
-        wallets,
         deposits,
         withdrawals,
-        recentTradePnL,
-        tradePnLStats,
-        walletHistory,
-        allTradePnL,
       ] = await Promise.allSettled([
-        this.walletsService.list(userId),
         this.depositsService.list(userId),
         this.withdrawalsService.list(userId),
-        this.tradePnLService.findAll(userId, days),
-        this.tradePnLService.getStatistics(userId, days),
-        this.walletsService.history(userId, 10), // Get recent 10 wallet activities
-        this.tradePnLService.findAll(userId), // Get all trade PnL data for chart processing
       ]);
 
       // Extract data with fallbacks for failed promises
-      const safeWallets = wallets.status === 'fulfilled' ? wallets.value : [];
+      const safeWallets: any[] = [];
       const safeDeposits =
         deposits.status === 'fulfilled' ? deposits.value : [];
       const safeWithdrawals =
         withdrawals.status === 'fulfilled' ? withdrawals.value : [];
-      const safeRecentTradePnL =
-        recentTradePnL.status === 'fulfilled' ? recentTradePnL.value : [];
-      const safeTradePnLStats =
-        tradePnLStats.status === 'fulfilled' ? tradePnLStats.value : null;
-      const safeWalletHistory =
-        walletHistory.status === 'fulfilled' ? walletHistory.value : [];
-      const safeAllTradePnL =
-        allTradePnL.status === 'fulfilled' ? allTradePnL.value : [];
+      const safeRecentTradePnL: any[] = [];
+      const safeTradePnLStats: any = null;
+      const safeWalletHistory: any[] = [];
+      const safeAllTradePnL: any[] = [];
 
       // Process positions data (removed - positions module deleted)
       const totalPnL = 0;
@@ -906,14 +888,9 @@ export class DashboardService {
 
   async getWalletsData(userId: string, timeframe: string = 'ALL') {
     try {
-      const [wallets, walletHistory] = await Promise.allSettled([
-        this.walletsService.list(userId),
-        this.walletsService.history(userId, 500), // Get more history for all timeframes
-      ]);
-
-      const safeWallets = wallets.status === 'fulfilled' ? wallets.value : [];
-      const safeWalletHistory =
-        walletHistory.status === 'fulfilled' ? walletHistory.value : [];
+      // Wallets module removed - using empty data
+      const safeWallets: any[] = [];
+      const safeWalletHistory: any[] = [];
 
       // Process wallets data - separate by platform type
       const dematWallets = safeWallets.filter(
@@ -974,15 +951,9 @@ export class DashboardService {
 
   async getTradePnLData(userId: string, timeframe: string = 'ALL') {
     try {
-      const [allTradePnL, tradePnLStats] = await Promise.allSettled([
-        this.tradePnLService.findAll(userId), // Get ALL data at once
-        this.tradePnLService.getStatistics(userId, 365), // Get stats for full year
-      ]);
-
-      const safeAllTradePnL =
-        allTradePnL.status === 'fulfilled' ? allTradePnL.value : [];
-      const safeTradePnLStats =
-        tradePnLStats.status === 'fulfilled' ? tradePnLStats.value : null;
+      // Trade PnL module removed - using empty data
+      const safeAllTradePnL: any[] = [];
+      const safeTradePnLStats: any = null;
 
       // Calculate totals for all timeframes
       const allTimeframeTotals =
@@ -1360,18 +1331,16 @@ export class DashboardService {
 
   async getFinancialSummary(userId: string) {
     try {
-      const [deposits, withdrawals, tradePnLData] = await Promise.allSettled([
+      const [deposits, withdrawals] = await Promise.allSettled([
         this.depositsService.list(userId),
         this.withdrawalsService.list(userId),
-        this.tradePnLService.getStatistics(userId, 3650), // Get all-time stats
       ]);
 
       const safeDeposits =
         deposits.status === 'fulfilled' ? deposits.value : [];
       const safeWithdrawals =
         withdrawals.status === 'fulfilled' ? withdrawals.value : [];
-      const safeTradePnLData =
-        tradePnLData.status === 'fulfilled' ? tradePnLData.value : null;
+      const safeTradePnLData: any = null;
 
       // Calculate total deposits (all transactions)
       const totalDeposits = safeDeposits.reduce(
@@ -1415,8 +1384,8 @@ export class DashboardService {
 
   async getTradePnLProgress(userId: string, year: number) {
     try {
-      // Get all trade PnL data for the specified year
-      const tradePnLRecords = await this.tradePnLService.findAll(userId);
+      // Trade PnL module removed - using empty data
+      const tradePnLRecords: any[] = [];
 
       // Filter records for the specified year
       const yearRecords = tradePnLRecords.filter((record) => {
@@ -1522,27 +1491,21 @@ export class DashboardService {
     try {
       // Fetch all data in parallel
       const [
-        allWallets,
         allDeposits,
         allWithdrawals,
-        allTradePnL,
-        walletHistory,
         tradePnLProgress,
       ] = await Promise.allSettled([
-        this.walletsService.list(userId),
         this.depositsService.list(userId),
         this.withdrawalsService.list(userId),
-        this.tradePnLService.findAll(userId),
-        this.walletsService.history(userId, 1000),
         this.getTradePnLProgress(userId, year),
       ]);
 
       // Extract data with fallbacks for failed promises
-      const safeWallets = allWallets.status === 'fulfilled' ? allWallets.value : [];
+      const safeWallets: any[] = [];
       const safeDeposits = allDeposits.status === 'fulfilled' ? allDeposits.value : [];
       const safeWithdrawals = allWithdrawals.status === 'fulfilled' ? allWithdrawals.value : [];
-      const safeTradePnL = allTradePnL.status === 'fulfilled' ? allTradePnL.value : [];
-      const safeWalletHistory = walletHistory.status === 'fulfilled' ? walletHistory.value : [];
+      const safeTradePnL: any[] = [];
+      const safeWalletHistory: any[] = [];
       const safeTradePnLProgress = tradePnLProgress.status === 'fulfilled' ? tradePnLProgress.value : null;
 
       // Generate comprehensive financial data for all supported timeframes
@@ -1577,13 +1540,13 @@ export class DashboardService {
         const pendingWithdrawals = filteredWithdrawals.filter(w => w.status === 'pending').length;
         const completedWithdrawals = filteredWithdrawals.filter(w => w.status === 'completed').length;
 
-        // Calculate trade P&L summary
-        const totalProfit = filteredTradePnL.reduce((sum, t) => sum + (t.profit || 0), 0);
-        const totalLoss = filteredTradePnL.reduce((sum, t) => sum + Math.abs(t.loss || 0), 0);
-        const netPnL = totalProfit - totalLoss;
-        const totalTrades = filteredTradePnL.length;
-        const winningTrades = filteredTradePnL.filter(t => (t.netPnL || 0) > 0).length;
-        const losingTrades = filteredTradePnL.filter(t => (t.netPnL || 0) < 0).length;
+        // Calculate trade P&L summary (trade-pnl module removed)
+        const totalProfit = 0;
+        const totalLoss = 0;
+        const netPnL = 0;
+        const totalTrades = 0;
+        const winningTrades = 0;
+        const losingTrades = 0;
 
         // Calculate positions summary (removed - positions module deleted)
         const totalPositions = 0;

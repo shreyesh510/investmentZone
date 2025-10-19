@@ -56,20 +56,7 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
     if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
   };
 
-  const goToWallets = () => {
-    navigate('/investment/wallets');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
 
-  const goToTradePnL = () => {
-    navigate('/investment/tradePnl');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
-
-  const goToTrading = () => {
-    navigate('/trading');
-    if (isMobile) onToggle(); // Close sidebar after navigation only on mobile
-  };
 
   return (
     <>
@@ -264,104 +251,7 @@ const Sidebar = memo(function Sidebar({ isOpen, onToggle, isMobile = false }: Si
                 </div>
               </button>
 
-              {/* Wallets */}
-              <button
-                onClick={goToWallets}
-                className={`flex items-center transition-all duration-200 w-full relative ${
-                  isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-                } ${
-                  isActivePath('/investment/wallets')
-                    ? isDarkMode
-                      ? 'bg-gray-700 border-l-4 border-yellow-400'
-                      : 'bg-gray-50 border-l-4 border-yellow-500'
-                    : isDarkMode
-                      ? 'bg-transparent hover:bg-gray-700'
-                      : 'bg-transparent hover:bg-gray-100'
-                }`}
-                title={!isOpen ? 'Wallets' : ''}
-              >
-                <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-                  <svg className={`w-5 h-5 flex-shrink-0 ${
-                    isActivePath('/investment/wallets')
-                      ? isDarkMode
-                        ? 'text-yellow-400'
-                        : 'text-yellow-600'
-                      : isDarkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-600'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2m0-4h4m0 0l-2-2m2 2l-2 2" />
-                  </svg>
-                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Wallets</span>}
-                </div>
-              </button>
-
-              {/* Trade P&L */}
-              <button
-                onClick={goToTradePnL}
-                className={`flex items-center transition-all duration-200 w-full relative ${
-                  isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-                } ${
-                  isActivePath('/investment/tradePnl')
-                    ? isDarkMode
-                      ? 'bg-gray-700 border-l-4 border-purple-400'
-                      : 'bg-gray-50 border-l-4 border-purple-500'
-                    : isDarkMode
-                      ? 'bg-transparent hover:bg-gray-700'
-                      : 'bg-transparent hover:bg-gray-100'
-                }`}
-                title={!isOpen ? 'Trade P&L' : ''}
-              >
-                <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-                  <svg className={`w-5 h-5 flex-shrink-0 ${
-                    isActivePath('/investment/tradePnl')
-                      ? isDarkMode
-                        ? 'text-purple-400'
-                        : 'text-purple-600'
-                      : isDarkMode
-                        ? 'text-gray-400'
-                        : 'text-gray-600'
-                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Trade P&L</span>}
-                </div>
-              </button>
             </>
-          )}
-
-          {/* Trading - Shared Section (visible to all users with investment access) */}
-          {canAccessInvestment() && (
-            <button
-              onClick={goToTrading}
-              className={`flex items-center transition-all duration-200 w-full relative ${
-                isOpen ? (isMobile ? 'px-3 py-2' : 'px-4 py-4') : 'justify-center px-2 py-4'
-              } ${
-                isActivePath('/trading')
-                  ? isDarkMode
-                    ? 'bg-gray-700 border-l-4 border-cyan-400'
-                    : 'bg-gray-50 border-l-4 border-cyan-500'
-                  : isDarkMode
-                    ? 'bg-transparent hover:bg-gray-700'
-                    : 'bg-transparent hover:bg-gray-100'
-              }`}
-              title={!isOpen ? 'Trading' : ''}
-            >
-              <div className={`flex items-center ${isOpen ? 'space-x-3' : ''}`}>
-                <svg className={`w-5 h-5 flex-shrink-0 ${
-                  isActivePath('/trading')
-                    ? isDarkMode
-                      ? 'text-cyan-400'
-                      : 'text-cyan-600'
-                    : isDarkMode
-                      ? 'text-gray-400'
-                      : 'text-gray-600'
-                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                {isOpen && <span className={`${isDarkMode ? 'text-white' : 'text-gray-900'} ${isMobile ? 'text-xs' : ''}`}>Trading</span>}
-              </div>
-            </button>
           )}
 
         </div>

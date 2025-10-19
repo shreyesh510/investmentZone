@@ -8,10 +8,7 @@ import { ChatModule } from './chat/chat.module';
 import { DatabaseModule } from './database/database.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { DepositsModule } from './deposits/deposits.module';
-import { WalletsModule } from './wallets/wallets.module';
-import { TradePnLModule } from './trade-pnl/trade-pnl.module';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { TradingModule } from './trading/trading.module';
 
 import { FirebaseDatabaseService } from './database/firebase-database.service';
 
@@ -22,10 +19,7 @@ import { FirebaseDatabaseService } from './database/firebase-database.service';
     DatabaseModule,
     WithdrawalsModule,
     DepositsModule,
-    WalletsModule,
-    TradePnLModule,
     DashboardModule,
-    TradingModule,
   ],
   controllers: [AppController],
   providers: [
