@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { DepositsModule } from './deposits/deposits.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { GoalsModule } from './goals/goals.module';
 
 import { FirebaseDatabaseService } from './database/firebase-database.service';
 
@@ -20,6 +21,7 @@ import { FirebaseDatabaseService } from './database/firebase-database.service';
     WithdrawalsModule,
     DepositsModule,
     DashboardModule,
+    GoalsModule,
   ],
   controllers: [AppController],
   providers: [
