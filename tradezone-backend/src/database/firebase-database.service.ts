@@ -41,6 +41,7 @@ export class FirebaseDatabaseService {
   private tradingWalletCollection = 'tradingWallet';
   private tradingPnLHistoryCollection = 'tradingPnLHistory';
   private tradingWalletHistoryCollection = 'tradingWalletHistory';
+  private goalsCollection = 'goals';
 
   constructor(private firebaseConfig: FirebaseConfig) {
     // Firestore will be initialized in onModuleInit
@@ -2155,6 +2156,118 @@ export class FirebaseDatabaseService {
     } catch (error) {
       console.error('Error getting trading wallet history:', error);
       return [];
+    }
+  }
+
+  // ==================== Goals Operations ====================
+  async createGoal(data: any): Promise<any> {
+    try {
+      const db = this.getFirestore();
+      const now = new Date();
+      const raw = { ...data, createdAt: now, updatedAt: now } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      const docRef = await db.collection(this.goalsCollection).add(payload);
+      const createdAt = this.serializeDate(payload.createdAt);
+      const updatedAt = this.serializeDate(payload.updatedAt);
+      return {
+        id: docRef.id,
+        ...payload,
+        createdAt,
+        updatedAt,
+      };
+    } catch (error) {
+      console.error('Error creating goal:', error);
+      throw error;
+    }
+  }
+
+  async getGoals(userId: string): Promise<any[]> {
+    try {
+      const snapshot = await this.getFirestore()
+        .collection(this.goalsCollection)
+        .where('userId', '==', userId)
+        .get();
+      const items = snapshot.docs.map((d) => {
+        const data = d.data() as any;
+        const createdAt = this.serializeDate(data.createdAt);
+        const updatedAt = this.serializeDate(data.updatedAt);
+        const startDate = this.serializeDate(data.startDate);
+        const endDate = this.serializeDate(data.endDate);
+        return { id: d.id, ...data, createdAt, updatedAt, startDate, endDate };
+      });
+      return items.sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      }) as any;
+    } catch (error) {
+      console.error('Error getting goals:', error);
+      return [] as any;
+    }
+  }
+
+  async getGoalById(userId: string, id: string): Promise<any | null> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.goalsCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return null;
+      const data = snap.data() as any;
+      if (!data || data.userId !== userId) return null;
+      const createdAt = this.serializeDate(data.createdAt);
+      const updatedAt = this.serializeDate(data.updatedAt);
+      const startDate = this.serializeDate(data.startDate);
+      const endDate = this.serializeDate(data.endDate);
+      return { id: snap.id, ...data, createdAt, updatedAt, startDate, endDate };
+    } catch (error) {
+      console.error('Error getting goal by id:', error);
+      return null;
+    }
+  }
+
+  async updateGoal(userId: string, id: string, data: any): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.goalsCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+      const existing = snap.data() as any;
+      if (!existing || existing.userId !== userId) return false;
+      const raw = { ...data, updatedAt: new Date() } as Record<string, any>;
+      const payload = Object.entries(raw).reduce(
+        (acc, [k, v]) => {
+          if (v !== undefined) (acc as any)[k] = v;
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+      await ref.update(payload);
+      return true;
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      return false;
+    }
+  }
+
+  async deleteGoal(userId: string, id: string): Promise<boolean> {
+    try {
+      const db = this.getFirestore();
+      const ref = db.collection(this.goalsCollection).doc(id);
+      const snap = await ref.get();
+      if (!snap.exists) return false;
+      const existing = snap.data() as any;
+      if (!existing || existing.userId !== userId) return false;
+      await ref.delete();
+      return true;
+    } catch (error) {
+      console.error('Error deleting goal:', error);
+      return false;
     }
   }
 }

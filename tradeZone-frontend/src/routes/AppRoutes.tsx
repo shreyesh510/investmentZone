@@ -6,6 +6,7 @@ import Settings from '../pages/settings';
 import InvestmentDashboard from '../pages/investment/dashboard';
 import Withdraw from '../pages/investment/withdraw';
 import Deposit from '../pages/investment/deposit';
+import Goals from '../pages/investment/goals';
 import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '../layouts/AppLayout';
 
@@ -65,6 +66,16 @@ export const createAppRoutes = ({ isAuthenticated }: AppRoutesConfig) => [
       <ProtectedRoute>
         <AppLayout>
           <Deposit />
+        </AppLayout>
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/investment/goals',
+    element: (
+      <ProtectedRoute>
+        <AppLayout>
+          <Goals />
         </AppLayout>
       </ProtectedRoute>
     )
