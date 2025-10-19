@@ -11,6 +11,8 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
   const [dashboardData, setDashboardData] = useState<ConsolidatedDashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Timeframe options mapped to API timeframes
   const timeframeOptions = [
@@ -27,7 +29,14 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const data = await newDashboardApi.getConsolidatedDashboard(timeframe, new Date().getFullYear());
+      // Use CUSTOM timeframe if date filters are provided
+      const effectiveTimeframe = (startDate || endDate) ? 'CUSTOM' : timeframe;
+      const data = await newDashboardApi.getConsolidatedDashboard(
+        effectiveTimeframe,
+        new Date().getFullYear(),
+        startDate || undefined,
+        endDate || undefined
+      );
       setDashboardData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch dashboard data');
@@ -36,13 +45,14 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
     }
   };
 
-  // Fetch data on mount and timeframe change
+  // Fetch data only on mount
   useEffect(() => {
     fetchDashboardData(selectedTimeframe);
-  }, [selectedTimeframe]);
+  }, []);
 
-  // Get current timeframe data
-  const currentTimeframeData: TimeframeFinancialData | null = dashboardData?.financialByTimeframe?.[selectedTimeframe] || null;
+  // Get current timeframe data - use CUSTOM if date filters are active
+  const activeTimeframe = (startDate || endDate) ? 'CUSTOM' : selectedTimeframe;
+  const currentTimeframeData: TimeframeFinancialData | null = dashboardData?.financialByTimeframe?.[activeTimeframe] || null;
 
   // Calculate totals from current timeframe data
   const calculateDepositTotal = () => {
@@ -105,40 +115,109 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
             Investment Dashboard
           </h1>
 
-          {/* Timeframe Selector */}
-          <div className="flex items-center gap-4 mb-6">
-            <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Timeframe:
-            </span>
-            <div className="flex gap-2">
-              {timeframeOptions.map((option) => (
+          {/* Filters Section */}
+          <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-800/50' : 'bg-white'} mb-6`}>
+            {/* Timeframe Selector */}
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Timeframe:
+              </span>
+              <div className="flex gap-2">
+                {timeframeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setSelectedTimeframe(option.value);
+                      // Clear date filters when selecting a timeframe
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                      selectedTimeframe === option.value && !startDate && !endDate
+                        ? isDarkMode
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-blue-500 text-white'
+                        : isDarkMode
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date Filter */}
+            <div className="flex items-center gap-4 mb-4 flex-wrap">
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Date Range:
+              </span>
+              <div className="flex items-center gap-2">
+                <label className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Start Date:
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={`px-3 py-1.5 text-sm rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                      : 'bg-white text-gray-900 border-gray-300 focus:border-blue-500'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  End Date:
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={`px-3 py-1.5 text-sm rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-gray-700 text-white border-gray-600 focus:border-blue-500'
+                      : 'bg-white text-gray-900 border-gray-300 focus:border-blue-500'
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500/50`}
+                />
+              </div>
+              {(startDate || endDate) && (
                 <button
-                  key={option.value}
-                  onClick={() => setSelectedTimeframe(option.value)}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                    selectedTimeframe === option.value
-                      ? isDarkMode
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-blue-500 text-white'
-                      : isDarkMode
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                    isDarkMode
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-red-500 text-white hover:bg-red-600'
                   }`}
                 >
-                  {option.label}
+                  Clear Dates
                 </button>
-              ))}
+              )}
             </div>
-            <button
-              onClick={() => fetchDashboardData(selectedTimeframe)}
-              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                isDarkMode
-                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-              }`}
-            >
-              Refresh
-            </button>
+
+            {/* Apply Filter Button */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => fetchDashboardData(selectedTimeframe)}
+                disabled={loading}
+                className={`px-6 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  loading
+                    ? isDarkMode
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : isDarkMode
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+              >
+                {loading ? 'Loading...' : 'Apply Filters'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -153,9 +232,18 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
         <div className={`p-6 rounded-2xl backdrop-blur-lg border ${
           isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-white/60 border-white/20'
         }`}>
-          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Performance Metrics ({selectedTimeframe})
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Performance Metrics ({activeTimeframe})
+            </h3>
+            {(startDate || endDate) && (
+              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {startDate && <span>From: {new Date(startDate).toLocaleDateString()}</span>}
+                {startDate && endDate && <span className="mx-2">•</span>}
+                {endDate && <span>To: {new Date(endDate).toLocaleDateString()}</span>}
+              </div>
+            )}
+          </div>
 
           {/* Unified Circular Progress Chart */}
           <div className="flex flex-col items-center mb-6">
@@ -166,13 +254,11 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                 <circle cx="21" cy="21" r="15.915" fill="none" stroke={isDarkMode ? '#374151' : '#e5e7eb'} strokeWidth="3"/>
 
                 {(() => {
-                  const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal() + (totals.profit * 89) + (Math.abs(totals.loss) * 89);
+                  const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal();
                   if (totalAmount === 0) return null;
 
                   const depositPercent = (calculateDepositTotal() / totalAmount) * 100;
                   const withdrawalPercent = (calculateWithdrawalTotal() / totalAmount) * 100;
-                  const profitPercent = ((totals.profit * 89) / totalAmount) * 100;
-                  const lossPercent = ((Math.abs(totals.loss) * 89) / totalAmount) * 100;
 
                   let currentOffset = 0;
 
@@ -204,32 +290,6 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                         onMouseEnter={() => setHoveredSegment('withdrawals')}
                         onMouseLeave={() => setHoveredSegment(null)}
                       />
-                      {/* Profit Segment */}
-                      <circle
-                        cx="21" cy="21" r="15.915"
-                        fill="none"
-                        stroke={hoveredSegment === 'profit' ? '#047857' : '#10b981'}
-                        strokeWidth={hoveredSegment === 'profit' ? "4" : "3"}
-                        strokeDasharray={`${profitPercent} 100`}
-                        strokeDashoffset={-(currentOffset += withdrawalPercent)}
-                        strokeLinecap="round"
-                        className="cursor-pointer transition-all duration-200"
-                        onMouseEnter={() => setHoveredSegment('profit')}
-                        onMouseLeave={() => setHoveredSegment(null)}
-                      />
-                      {/* Loss Segment */}
-                      <circle
-                        cx="21" cy="21" r="15.915"
-                        fill="none"
-                        stroke={hoveredSegment === 'loss' ? '#dc2626' : '#ef4444'}
-                        strokeWidth={hoveredSegment === 'loss' ? "4" : "3"}
-                        strokeDasharray={`${lossPercent} 100`}
-                        strokeDashoffset={-(currentOffset += profitPercent)}
-                        strokeLinecap="round"
-                        className="cursor-pointer transition-all duration-200"
-                        onMouseEnter={() => setHoveredSegment('loss')}
-                        onMouseLeave={() => setHoveredSegment(null)}
-                      />
                     </>
                   );
                 })()}
@@ -241,36 +301,26 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                   <>
                     <span className={`text-lg font-bold ${
                       hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
-                      hoveredSegment === 'withdrawals' ? (isDarkMode ? 'text-orange-400' : 'text-orange-600') :
-                      hoveredSegment === 'profit' ? (isDarkMode ? 'text-green-400' : 'text-green-600') :
-                      (isDarkMode ? 'text-red-400' : 'text-red-600')
+                      (isDarkMode ? 'text-orange-400' : 'text-orange-600')
                     }`}>
                       {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).inr :
-                       hoveredSegment === 'withdrawals' ? formatCurrencyWithUSD(calculateWithdrawalTotal()).inr :
-                       hoveredSegment === 'profit' ? formatCurrencyWithUSD(totals.profit * 89).inr :
-                       formatCurrencyWithUSD(Math.abs(totals.loss) * 89).inr}
+                       formatCurrencyWithUSD(calculateWithdrawalTotal()).inr}
                     </span>
                     <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
                       {hoveredSegment === 'deposits' ? formatCurrencyWithUSD(calculateDepositTotal()).usd :
-                       hoveredSegment === 'withdrawals' ? formatCurrencyWithUSD(calculateWithdrawalTotal()).usd :
-                       hoveredSegment === 'profit' ? formatCurrencyWithUSD(totals.profit * 89).usd :
-                       formatCurrencyWithUSD(Math.abs(totals.loss) * 89).usd}
+                       formatCurrencyWithUSD(calculateWithdrawalTotal()).usd}
                     </span>
                     <span className={`text-sm font-medium ${
                       hoveredSegment === 'deposits' ? (isDarkMode ? 'text-blue-400' : 'text-blue-600') :
-                      hoveredSegment === 'withdrawals' ? (isDarkMode ? 'text-orange-400' : 'text-orange-600') :
-                      hoveredSegment === 'profit' ? (isDarkMode ? 'text-green-400' : 'text-green-600') :
-                      (isDarkMode ? 'text-red-400' : 'text-red-600')
+                      (isDarkMode ? 'text-orange-400' : 'text-orange-600')
                     }`}>
                       {hoveredSegment.charAt(0).toUpperCase() + hoveredSegment.slice(1)}
                     </span>
                     <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                       {(() => {
-                        const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal() + (totals.profit * 89) + (Math.abs(totals.loss) * 89);
+                        const totalAmount = calculateDepositTotal() + calculateWithdrawalTotal();
                         const amount = hoveredSegment === 'deposits' ? calculateDepositTotal() :
-                                     hoveredSegment === 'withdrawals' ? calculateWithdrawalTotal() :
-                                     hoveredSegment === 'profit' ? (totals.profit * 89) :
-                                     (Math.abs(totals.loss) * 89);
+                                     calculateWithdrawalTotal();
                         return `${((amount / totalAmount) * 100).toFixed(1)}% of total`;
                       })()}
                     </span>
@@ -318,65 +368,9 @@ const InvestmentDashboard = memo(function InvestmentDashboard() {
                   </p>
                 </div>
               </div>
-
-              {/* Profit */}
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Profit</p>
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'} truncate`}>
-                    {formatCurrencyWithUSD(totals.profit * 89).inr}
-                  </p>
-                </div>
-              </div>
-
-              {/* Loss */}
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loss</p>
-                  <p className={`text-xs font-medium ${isDarkMode ? 'text-red-400' : 'text-red-600'} truncate`}>
-                    {formatCurrencyWithUSD(Math.abs(totals.loss) * 89).inr}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Summary Statistics */}
-          {currentTimeframeData && (
-            <div className="mt-6 pt-6 border-t border-gray-700/30">
-              <h4 className={`text-md font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Trading Statistics
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <p className={`text-lg font-bold ${totals.netPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    ${totals.netPnL.toFixed(2)}
-                  </p>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Net P&L</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {currentTimeframeData.tradePnL.winRate}
-                  </p>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Win Rate</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {totals.trades}
-                  </p>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Trades</p>
-                </div>
-                <div className="text-center">
-                  <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {currentTimeframeData.tradePnL.totalTrades}
-                  </p>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Days Traded</p>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
