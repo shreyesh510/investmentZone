@@ -137,6 +137,37 @@ export class DashboardService {
       return itemDate >= startDate && itemDate <= endDate;
     });
   }
+
+  private filterByDateTimeRange<
+    T extends {
+      createdAt?: any;
+      requestedAt?: any;
+      date?: any;
+      timestamp?: any;
+    },
+  >(data: T[], startDate: Date, endDate: Date, startTime?: string, endTime?: string): T[] {
+    return data.filter((item) => {
+      // Try different date fields
+      const dateValue =
+        item.createdAt || item.requestedAt || item.date || item.timestamp;
+      if (!dateValue) return false;
+
+      const itemDate = new Date(dateValue);
+
+      // First check if date is within range
+      if (itemDate < startDate || itemDate > endDate) return false;
+
+      // If time filters are provided, check time as well
+      if (startTime || endTime) {
+        const itemTimeString = itemDate.toTimeString().split(' ')[0]; // Get HH:MM:SS
+
+        if (startTime && itemTimeString < startTime) return false;
+        if (endTime && itemTimeString > endTime) return false;
+      }
+
+      return true;
+    });
+  }
   constructor(
     private readonly depositsService: DepositsService,
     private readonly withdrawalsService: WithdrawalsService,
@@ -1486,7 +1517,9 @@ export class DashboardService {
     timeframe: string = '1M',
     year: number,
     customStartDate?: string,
-    customEndDate?: string
+    customEndDate?: string,
+    startTime?: string,
+    endTime?: string
   ) {
     try {
       // Fetch all data in parallel
@@ -1525,10 +1558,17 @@ export class DashboardService {
           tf === 'CUSTOM' ? customEndDate : undefined
         );
 
-        // Filter data by timeframe
-        const filteredDeposits = this.filterByDateRange(safeDeposits, startDate, endDate);
-        const filteredWithdrawals = this.filterByDateRange(safeWithdrawals, startDate, endDate);
-        const filteredTradePnL = this.filterByDateRange(safeTradePnL, startDate, endDate);
+        // Filter data by timeframe - use time filter if provided
+        const useTimeFilter = startTime || endTime;
+        const filteredDeposits = useTimeFilter
+          ? this.filterByDateTimeRange(safeDeposits, startDate, endDate, startTime, endTime)
+          : this.filterByDateRange(safeDeposits, startDate, endDate);
+        const filteredWithdrawals = useTimeFilter
+          ? this.filterByDateTimeRange(safeWithdrawals, startDate, endDate, startTime, endTime)
+          : this.filterByDateRange(safeWithdrawals, startDate, endDate);
+        const filteredTradePnL = useTimeFilter
+          ? this.filterByDateTimeRange(safeTradePnL, startDate, endDate, startTime, endTime)
+          : this.filterByDateRange(safeTradePnL, startDate, endDate);
 
         // Calculate deposits summary
         const totalDeposits = filteredDeposits.reduce((sum, d) => sum + (d.amount || 0), 0);
@@ -1646,6 +1686,7 @@ export class DashboardService {
         // Metadata
         requestedTimeframe: timeframe,
         customDateRange: timeframe === 'CUSTOM' ? { customStartDate, customEndDate } : null,
+        timeFilter: (startTime || endTime) ? { startTime, endTime } : null,
         year,
         generatedAt: new Date().toISOString(),
         supportedTimeframes: ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL', 'CUSTOM'],
@@ -1663,6 +1704,7 @@ export class DashboardService {
         tradePnLProgress: null,
         requestedTimeframe: timeframe,
         customDateRange: timeframe === 'CUSTOM' ? { customStartDate, customEndDate } : null,
+        timeFilter: (startTime || endTime) ? { startTime, endTime } : null,
         year,
         generatedAt: new Date().toISOString(),
         supportedTimeframes: ['1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'ALL', 'CUSTOM'],

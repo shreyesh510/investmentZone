@@ -187,7 +187,9 @@ export const newDashboardApi = {
     timeframe: string = '1M',
     year?: number,
     customStartDate?: string,
-    customEndDate?: string
+    customEndDate?: string,
+    startTime?: string,
+    endTime?: string
   ): Promise<ConsolidatedDashboardResponse> => {
     const params = new URLSearchParams();
     params.append('timeframe', timeframe);
@@ -199,6 +201,12 @@ export const newDashboardApi = {
     }
     if (customEndDate) {
       params.append('customEndDate', customEndDate);
+    }
+    if (startTime) {
+      params.append('startTime', startTime);
+    }
+    if (endTime) {
+      params.append('endTime', endTime);
     }
 
     const response = await getAxios.get(`/dashboard?${params.toString()}`);

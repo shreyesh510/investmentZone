@@ -14,6 +14,8 @@ export class DashboardController {
     @Query('year') year?: string,
     @Query('customStartDate') customStartDate?: string,
     @Query('customEndDate') customEndDate?: string,
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
   ) {
     const userId = req.user.userId;
     const targetYear = year ? parseInt(year, 10) : new Date().getFullYear();
@@ -23,7 +25,9 @@ export class DashboardController {
       timeframe,
       targetYear,
       customStartDate,
-      customEndDate
+      customEndDate,
+      startTime,
+      endTime
     );
   }
 }
